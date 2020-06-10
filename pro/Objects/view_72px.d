@@ -1,0 +1,9 @@
+.\objects\view_72px.o: ..\picture\view_72px.c
+.\objects\view_72px.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\objects\view_72px.o: ..\emwin\inc\GUI.h
+.\objects\view_72px.o: ..\emwin\inc\GUI_ConfDefaults.h
+.\objects\view_72px.o: ..\emwin\Config\GUIConf.h
+.\objects\view_72px.o: ..\emwin\inc\GUI_Type.h
+.\objects\view_72px.o: ..\emwin\inc\LCD.h
+.\objects\view_72px.o: ..\emwin\inc\Global.h
+.\objects\view_72px.o: ..\emwin\inc\GUI_Version.h

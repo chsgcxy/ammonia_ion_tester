@@ -1,0 +1,9 @@
+.\objects\logo_170px.o: ..\picture\logo_170px.c
+.\objects\logo_170px.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\objects\logo_170px.o: ..\emwin\inc\GUI.h
+.\objects\logo_170px.o: ..\emwin\inc\GUI_ConfDefaults.h
+.\objects\logo_170px.o: ..\emwin\Config\GUIConf.h
+.\objects\logo_170px.o: ..\emwin\inc\GUI_Type.h
+.\objects\logo_170px.o: ..\emwin\inc\LCD.h
+.\objects\logo_170px.o: ..\emwin\inc\Global.h
+.\objects\logo_170px.o: ..\emwin\inc\GUI_Version.h

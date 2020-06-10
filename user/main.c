@@ -36,6 +36,7 @@ USB_OTG_CORE_HANDLE  USB_OTG_Core;
 
 extern int main_menu_creat(void);
 extern int ui_check_creat(void);
+extern int ui_test_creat(void);
 //extern int ui_setting_creat(void);
 extern void lcd_io_init(void);
 
@@ -71,8 +72,7 @@ static void task_ui(void *args)
 			ui_check_creat();
 			break;
 		case UI_MSG_LOAD_TEST:
-			//test_func.func = UI_MSG_LOAD_TEST;
-			//ui_test_creat(&test_func);
+			ui_test_creat();
 			break;
 		case UI_MSG_LOAD_SETTING:
 			//ui_setting_creat();

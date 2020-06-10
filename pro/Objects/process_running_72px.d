@@ -1,9 +1,0 @@
-.\objects\process_running_72px.o: ..\picture\process_running_72px.c
-.\objects\process_running_72px.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
-.\objects\process_running_72px.o: ..\emwin\inc\GUI.h
-.\objects\process_running_72px.o: ..\emwin\inc\GUI_ConfDefaults.h
-.\objects\process_running_72px.o: ..\emwin\Config\GUIConf.h
-.\objects\process_running_72px.o: ..\emwin\inc\GUI_Type.h
-.\objects\process_running_72px.o: ..\emwin\inc\LCD.h
-.\objects\process_running_72px.o: ..\emwin\inc\Global.h
-.\objects\process_running_72px.o: ..\emwin\inc\GUI_Version.h

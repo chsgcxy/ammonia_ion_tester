@@ -29,6 +29,7 @@
 #include "beep.h"
 #include "stm32f2xx_rtc.h"
 #include "experiment.h"
+#include "ui_diag.h"
 /*********************************************************************
 *
 *       Defines
@@ -51,13 +52,11 @@
 #define ID_SPINBOX_5 (GUI_ID_USER + 0x0F)
 #define ID_TEXT_5 (GUI_ID_USER + 0x10)
 #define ID_TEXT_6 (GUI_ID_USER + 0x11)
-#define ID_BUTTON_ZSBXCJZ (GUI_ID_USER + 0x12)
-#define ID_BUTTON_3 (GUI_ID_USER + 0x13)
-#define ID_BUTTON_DJDWJZ (GUI_ID_USER + 0x14)
+#define ID_BUTTON_3 (GUI_ID_USER + 0x12)
 
 // USER START (Optionally insert additional defines)
 extern const GUI_FONT GUI_FontHZ_yahei_16;
-extern const GUI_FONT GUI_FontHZ_yahei_16;
+extern const GUI_FONT GUI_FontHZ_yahei_20;
 // USER END
 
 /*********************************************************************
@@ -66,11 +65,10 @@ extern const GUI_FONT GUI_FontHZ_yahei_16;
 *
 **********************************************************************
 */
-extern int diag_err_creat(struct ui_exper_info *info);
-extern int diag_info_creat(struct ui_exper_info *info);
+//extern int diag_err_creat(struct ui_exper_info *info);
+//extern int diag_info_creat(struct ui_exper_info *info);
 // USER START (Optionally insert additional static data)
 // USER END
-static struct ui_exper_info ginfo;
 /*********************************************************************
 *
 *       _aDialogCreate
@@ -78,9 +76,7 @@ static struct ui_exper_info ginfo;
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
     {FRAMEWIN_CreateIndirect, "Framewin", ID_FRAMEWIN_0, 0, 0, 800, 480, 0, 0x0, 0},
     
-    {BUTTON_CreateIndirect, "触摸屏校准", ID_BUTTON_0, 10, 10, 200, 140, 0, 0x0, 0},
-    {BUTTON_CreateIndirect, "注射泵行程校准", ID_BUTTON_ZSBXCJZ, 285, 10, 200, 140, 0, 0x0, 0},
-    {BUTTON_CreateIndirect, "电极电位校准", ID_BUTTON_DJDWJZ, 580, 10, 200, 140, 0, 0x0, 0},
+    {BUTTON_CreateIndirect, "触摸屏校准", ID_BUTTON_0, 10, 10, 770, 140, 0, 0x0, 0},
 
     {SPINBOX_CreateIndirect, "Spinbox", ID_SPINBOX_0, 10, 230, 110, 70, 0, 0x0, 0},
     {TEXT_CreateIndirect, "年", ID_TEXT_0, 123, 250, 25, 35, 0, 0x64, 0},
@@ -110,7 +106,6 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 // USER END
 static RTC_TimeTypeDef  RTC_TimeStructure;
 static RTC_DateTypeDef  RTC_DateStructure;
-static struct ui_exper_info ginfo;
 
 static void ctrl_all_items(WM_HWIN hWin, int enable)
 {
@@ -146,22 +141,14 @@ static void _cbDialog(WM_MESSAGE *pMsg)
         hItem = pMsg->hWin;
         FRAMEWIN_SetTitleHeight(hItem, 50);
         FRAMEWIN_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
-        FRAMEWIN_SetTextColor(hItem, GUI_BLUE);
-        FRAMEWIN_SetClientColor(hItem, GUI_GRAY);
-        FRAMEWIN_SetFont(hItem, &GUI_FontHZ_yahei_16);
+        FRAMEWIN_SetFont(hItem, &GUI_FontHZ_yahei_20);
+        FRAMEWIN_SetTextColor(hItem, GUI_BLACK_33);
+        FRAMEWIN_SetClientColor(hItem, GUI_WHITE);
         FRAMEWIN_SetText(hItem, "系统设置");
         //
         // Initialization of 'Button'
         //
         hItem = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_0);
-        BUTTON_SetFont(hItem, &GUI_FontHZ_yahei_16);
-        BUTTON_SetTextColor(hItem, 0, GUI_BLUE);
-
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_ZSBXCJZ);
-        BUTTON_SetFont(hItem, &GUI_FontHZ_yahei_16);
-        BUTTON_SetTextColor(hItem, 0, GUI_BLUE);
-        
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_DJDWJZ);
         BUTTON_SetFont(hItem, &GUI_FontHZ_yahei_16);
         BUTTON_SetTextColor(hItem, 0, GUI_BLUE);
         //
@@ -266,48 +253,6 @@ static void _cbDialog(WM_MESSAGE *pMsg)
                 // USER END
             }
             break;
-        case ID_BUTTON_ZSBXCJZ: // Notifications sent by 'Button'
-            switch (NCode)
-            {
-            case WM_NOTIFICATION_CLICKED:
-                // USER START (Optionally insert code for reacting on notification message)
-                // touch calc
-                beep_clicked();
-                ctrl_all_items(pMsg->hWin, 0);
-                WM_DisableWindow(pMsg->hWin);
-                WM_Exec();
-                ginfo.func = INFO_ZSB_CALI;
-                ginfo.flag = 0;
-                if (!diag_info_creat(&ginfo))
-                    diag_err_creat(&ginfo);
-                ctrl_all_items(pMsg->hWin, 1);
-                // USER END
-                break;
-            case WM_NOTIFICATION_RELEASED:
-                // USER START (Optionally insert code for reacting on notification message)
-                // USER END
-                break;
-                // USER START (Optionally insert additional code for further notification handling)
-                // USER END
-            }
-            break;  
-        case ID_BUTTON_DJDWJZ:
-            switch (NCode) {
-            case WM_NOTIFICATION_CLICKED:
-                beep_clicked();
-                ctrl_all_items(pMsg->hWin, 0);
-                WM_DisableWindow(pMsg->hWin);
-                WM_Exec();
-                ginfo.func = INFO_DJDW_CALC;
-                ginfo.flag = 0;
-                if (!diag_info_creat(&ginfo))
-                    diag_err_creat(&ginfo);
-                ctrl_all_items(pMsg->hWin, 1);
-                break;
-            case WM_NOTIFICATION_RELEASED:
-                break;
-            }
-            break;             
         case ID_BUTTON_1: // Notifications sent by 'Button'
             switch (NCode)
             {
@@ -333,10 +278,11 @@ static void _cbDialog(WM_MESSAGE *pMsg)
                 ctrl_all_items(pMsg->hWin, 0);
                 WM_DisableWindow(pMsg->hWin);
                 WM_Exec();
-                ginfo.func = INFO_DATE_SAVE;
-                ginfo.flag = 0;
-                ginfo.str = "时间设置成功!";
-                diag_err_creat(&ginfo);
+                g_diag_ok.header = "信息";
+                g_diag_ok.str_lin1 = "时间设置成功!";
+                g_diag_ok.str_lin2 = NULL;
+                g_diag_ok.str_lin3 = NULL;
+                diag_ok_creat();
                 WM_EnableWindow(pMsg->hWin);
                 ctrl_all_items(pMsg->hWin, 1);
                 break;

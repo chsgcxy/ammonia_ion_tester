@@ -448,6 +448,16 @@
               <FileType>1</FileType>
               <FilePath>..\user\ui_test.c</FilePath>
             </File>
+            <File>
+              <FileName>ui_setting.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\ui_setting.c</FilePath>
+            </File>
+            <File>
+              <FileName>ui_diag_ok.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\ui_diag_ok.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

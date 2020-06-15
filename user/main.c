@@ -37,7 +37,8 @@ USB_OTG_CORE_HANDLE  USB_OTG_Core;
 extern int main_menu_creat(void);
 extern int ui_check_creat(void);
 extern int ui_test_creat(void);
-//extern int ui_setting_creat(void);
+extern int ui_setting_creat(void);
+
 extern void lcd_io_init(void);
 
 extern const GUI_BITMAP bmlogo;
@@ -75,7 +76,7 @@ static void task_ui(void *args)
 			ui_test_creat();
 			break;
 		case UI_MSG_LOAD_SETTING:
-			//ui_setting_creat();
+			ui_setting_creat();
 			break;
 		case UI_MSG_LOAD_DATA:
 			//ui_data_creat();
@@ -87,7 +88,7 @@ static void task_ui(void *args)
 			vTaskSuspend(handle_touch);
 			touch_calibrate(1);
 			vTaskResume(handle_touch);
-			//ui_setting_creat();
+			ui_setting_creat();
 			break;
 		default:
 			break;

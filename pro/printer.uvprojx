@@ -347,10 +347,10 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>3</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
-            <OneElfS>1</OneElfS>
+            <OneElfS>0</OneElfS>
             <Strict>0</Strict>
             <EnumInt>0</EnumInt>
             <PlainCh>0</PlainCh>
@@ -457,6 +457,16 @@
               <FileName>ui_diag_ok.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\user\ui_diag_ok.c</FilePath>
+            </File>
+            <File>
+              <FileName>ui_numpad.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\ui_numpad.c</FilePath>
+            </File>
+            <File>
+              <FileName>test.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\test.c</FilePath>
             </File>
           </Files>
         </Group>

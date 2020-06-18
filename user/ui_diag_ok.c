@@ -23,7 +23,6 @@
 
 #include "DIALOG.h"
 #include "beep.h"
-#include "experiment.h"
 #include "main.h"
 #include "string.h"
 #include "stepmotor.h"

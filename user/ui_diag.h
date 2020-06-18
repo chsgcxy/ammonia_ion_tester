@@ -12,5 +12,7 @@ extern struct diag_ok g_diag_ok;
 
 
 extern int diag_ok_creat(void);
+extern int numpad_creat(void);
+extern char *numpad_get(void);
 
 #endif

@@ -22,10 +22,14 @@
 // USER END
 
 #include "DIALOG.h"
+#include "WM.h"
 #include "stdio.h"
 #include "main.h"
 #include "beep.h"
 #include "config.h"
+#include "ui_diag.h"
+#include "test.h"
+#include "ad770x.h"
 /*********************************************************************
 *
 *       Defines
@@ -78,7 +82,7 @@ static GRAPH_DATA_Handle pdataGRP;
 *       _aDialogCreate
 */
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
-    {FRAMEWIN_CreateIndirect, "Framewin", ID_FRAMEWIN_0, 0, 0, 800, 480, 0, 0x0, 0 },
+    {WINDOW_CreateIndirect, "Framewin", ID_FRAMEWIN_0, 0, 0, 800, 480, 0, 0x0, 0 },
 
     {GRAPH_CreateIndirect, "Graph", ID_GRAPH_0, 2, 2, 300, 385, 0, 0x0, 0 },
 
@@ -115,7 +119,27 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 
 // USER START (Optionally insert additional static code)
 // USER END
+static void enable_all_items(WM_HWIN hWin, int enable)
+{
+    WM_HWIN hItem;
+    int id;
 
+    if (enable)
+        for (id = ID_GRAPH_0; id <= ID_BUTTON_RETURN; id++) {
+            hItem = WM_GetDialogItem(hWin, id);
+            WM_EnableWindow(hItem);
+        }
+    else
+        for (id = ID_GRAPH_0; id <= ID_BUTTON_RETURN; id++) {
+            hItem = WM_GetDialogItem(hWin, id);
+            WM_DisableWindow(hItem);
+        }   
+}
+
+static char strbuf[32];
+struct test_data g_td;
+static float volt = 0.0;
+static WM_HTIMER hTimer;
 /*********************************************************************
 *
 *       _cbDialog
@@ -124,6 +148,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     WM_HWIN      hItem;
     int     NCode;
     int     Id;
+    char    *p;
 
     switch (pMsg->MsgId) {
     case WM_INIT_DIALOG:
@@ -131,12 +156,15 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         // Initialization of 'Framewin'
         //
         hItem = pMsg->hWin;
-        FRAMEWIN_SetTitleHeight(hItem, 50);
-        FRAMEWIN_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
-        FRAMEWIN_SetFont(hItem, &GUI_FontHZ_yahei_20);
-        FRAMEWIN_SetTextColor(hItem, GUI_BLACK_33);
-        FRAMEWIN_SetClientColor(hItem, GUI_WHITE);
-        FRAMEWIN_SetText(hItem, "离子分析");
+        // FRAMEWIN_SetTitleHeight(hItem, 50);
+        // FRAMEWIN_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
+        // FRAMEWIN_SetFont(hItem, &GUI_FontHZ_yahei_20);
+        // FRAMEWIN_SetTextColor(hItem, GUI_BLACK_33);
+        // FRAMEWIN_SetClientColor(hItem, GUI_WHITE);
+        // FRAMEWIN_SetText(hItem, "离子分析");
+
+        WM_CreateTimer(hItem, 1, 1000, 0);
+        printf("WM creat timer\r\n");
 
         hItem = WM_GetDialogItem(pMsg->hWin, ID_GRAPH_0);
         GRAPH_SetBorder(hItem, 25, 2, 3, 15);
@@ -259,13 +287,110 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         BUTTON_SetFont(hItem, &GUI_FontHZ_yahei_16);
         BUTTON_SetTextColor(hItem, BUTTON_CI_UNPRESSED, GUI_DARKRED);
 
+        break;
     case WM_NOTIFY_PARENT:
         Id    = WM_GetId(pMsg->hWinSrc);
         NCode = pMsg->Data.v;
         switch(Id) {
+        case ID_EDIT_WEIGHT:
+            switch (NCode) {
+            case WM_NOTIFICATION_CLICKED:
+                beep_clicked();
+                enable_all_items(pMsg->hWin, 0);
+                WM_Exec();
+                if (numpad_creat()) {
+                    p = numpad_get();
+                    sscanf(p, "%f", &g_td.weight);
+                    sprintf(strbuf, "%.2fg", g_td.weight);
+                    hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_WEIGHT);
+                    EDIT_SetText(hItem, strbuf);
+                }
+                enable_all_items(pMsg->hWin, 1);
+                break;
+            default:
+                break;
+            }
+            break;
+        case ID_EDIT_VOLUME:
+            switch (NCode) {
+            case WM_NOTIFICATION_CLICKED:
+                beep_clicked();
+                enable_all_items(pMsg->hWin, 0);
+                WM_Exec();
+                if (numpad_creat()) {
+                    p = numpad_get();
+                    sscanf(p, "%f", &g_td.volume);
+                    sprintf(strbuf, "%.2fml", g_td.volume);
+                    hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_VOLUME);
+                    EDIT_SetText(hItem, strbuf);
+                }
+                enable_all_items(pMsg->hWin, 1);
+                break;
+            default:
+                break;
+            }
+            break;
+        case ID_EDIT_BLOCKTEST1:
+            switch (NCode) {
+            case WM_NOTIFICATION_CLICKED:
+                beep_clicked();
+                enable_all_items(pMsg->hWin, 0);
+                WM_Exec();
+                if (numpad_creat()) {
+                    p = numpad_get();
+                    sscanf(p, "%f", &g_td.blockv1);
+                    sprintf(strbuf, "%.2fmV", g_td.blockv1);
+                    hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_BLOCKTEST1);
+                    EDIT_SetText(hItem, strbuf);
+                }
+                enable_all_items(pMsg->hWin, 1);
+                break;
+            default:
+                break;
+            }
+            break;
+        case ID_EDIT_BLOCKTEST2:
+            switch (NCode) {
+            case WM_NOTIFICATION_CLICKED:
+                beep_clicked();
+                enable_all_items(pMsg->hWin, 0);
+                WM_Exec();
+                if (numpad_creat()) {
+                    p = numpad_get();
+                    sscanf(p, "%f", &g_td.blockv2);
+                    sprintf(strbuf, "%.2fmV", g_td.blockv2);
+                    hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_BLOCKTEST2);
+                    EDIT_SetText(hItem, strbuf);
+                }
+                enable_all_items(pMsg->hWin, 1);
+                break;
+            default:
+                break;
+            }
+            break;
+        case ID_BUTTON_RETURN:
+            switch (NCode) {
+            case WM_NOTIFICATION_CLICKED:
+                beep_clicked();
+                printf("run main menu\r\n");
+                g_ui_msg.msg = UI_MSG_LOAD_MENU;
+                GUI_EndDialog(pMsg->hWin, 0);
+                break;
+            default:
+                break;
+            }
+            break;
         default:
             break;
         }
+        break;
+    case WM_TIMER:
+        sprintf(strbuf, "%.3fmV", test_volt_get());
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLT_VALUE);
+        TEXT_SetText(hItem, strbuf);
+        printf("volt=%f\r\n", volt);
+        WM_RestartTimer(pMsg->Data.v, 1000);
+        break;
     default:
         WM_DefaultProc(pMsg);
         break;

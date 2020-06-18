@@ -28,7 +28,6 @@
 #include "main.h"
 #include "beep.h"
 #include "stm32f2xx_rtc.h"
-#include "experiment.h"
 #include "ui_diag.h"
 /*********************************************************************
 *

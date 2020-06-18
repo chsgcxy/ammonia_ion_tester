@@ -19,7 +19,6 @@
 #include "ff.h"
 #include "diskio.h"
 #include "main.h"
-#include "experiment.h"
 #include "sysconf.h"
 #include "beep.h"
 #include "ds18b20.h"

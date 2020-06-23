@@ -14,5 +14,6 @@ struct test_data {
 
 extern int test_init(void);
 extern float test_volt_get(void);
+extern int test_progress(int cnt);
 
 #endif

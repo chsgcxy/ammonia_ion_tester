@@ -44,3 +44,8 @@ float test_volt_get(void)
 
     return volt;
 }
+
+int test_progress(int cnt)
+{
+    return ((TEST_LAST_CNT - cnt) * 100 / TEST_LAST_CNT);
+}

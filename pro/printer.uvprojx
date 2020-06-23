@@ -468,6 +468,11 @@
               <FileType>1</FileType>
               <FilePath>..\user\test.c</FilePath>
             </File>
+            <File>
+              <FileName>ui_diag_start.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\ui_diag_start.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

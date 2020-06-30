@@ -10,10 +10,12 @@ struct diag_info {
 
 extern struct diag_info g_diag_ok;
 extern struct diag_info g_diag_start;
+extern struct diag_info g_diag_wait;
 
 
 extern int diag_ok_creat(void);
 extern int diag_start_creat(void);
+extern WM_HWIN diag_wait_creat(int x0);
 extern int numpad_creat(void);
 extern char *numpad_get(void);
 

@@ -473,6 +473,11 @@
               <FileType>1</FileType>
               <FilePath>..\user\ui_diag_start.c</FilePath>
             </File>
+            <File>
+              <FileName>ui_diag_wait.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\ui_diag_wait.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

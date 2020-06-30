@@ -73,12 +73,26 @@
 
 #define ID_TEXT_HEADER          (GUI_ID_USER + 0x16)
 
+enum run_flags{
+    RUN_IDLE = 0x0,
+    RUN_BLOCK1,
+    RUN_BLOCK2,
+    RUN_TEST
+};
+
 extern const GUI_FONT GUI_FontHZ_yahei_20;
 extern const GUI_FONT GUI_FontHZ_yahei_16;
 // USER END
 
 static GRAPH_SCALE_Handle hScaleV, hScaleH;
 static GRAPH_DATA_Handle pdataGRP;
+static WM_HWIN wait_diag_handle;
+static char strbuf[32];
+struct test_data g_td;
+static float volt = 0.0;
+static int run_flag = RUN_IDLE;
+static int run_cnt = TEST_LAST_CNT;
+static GUI_POINT point = {0, 0};
 /*********************************************************************
 *
 *       _aDialogCreate
@@ -138,14 +152,6 @@ static void enable_all_items(WM_HWIN hWin, int enable)
             WM_DisableWindow(hItem);
         }   
 }
-
-static char strbuf[32];
-struct test_data g_td;
-static float volt = 0.0;
-static WM_HTIMER hTimer;
-static int run_flag = 0;
-static int run_cnt = TEST_LAST_CNT;
-static GUI_POINT point = {0, 0};
 
 static void graph_clear(void)
 {
@@ -409,7 +415,13 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
                     PROGBAR_SetValue(hItem, 0);
                     run_cnt = TEST_LAST_CNT;
-                    run_flag = 1;
+                    run_flag = RUN_BLOCK1;
+                    g_diag_wait.header = "提示";
+                    g_diag_wait.str_lin1 = "正在进行空白实验1";
+                    g_diag_wait.str_lin2 = NULL;
+                    g_diag_wait.str_lin3 = "请稍后......";
+                    wait_diag_handle = diag_wait_creat(320);
+                    GUI_ExecCreatedDialog(wait_diag_handle);
                 }
                 break;
             default:
@@ -434,7 +446,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
                     PROGBAR_SetValue(hItem, 0);
                     run_cnt = TEST_LAST_CNT;
-                    run_flag = 1;
+                    run_flag = RUN_BLOCK2;
                 }
                 break;
             default:
@@ -459,7 +471,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
                     PROGBAR_SetValue(hItem, 0);
                     run_cnt = TEST_LAST_CNT;
-                    run_flag = 1;
+                    run_flag = RUN_TEST;
                 }
                 break;
             default:
@@ -471,15 +483,17 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         }
         break;
     case WM_TIMER:
-        if (run_flag) {
+        if (run_flag != RUN_IDLE) {
             run_cnt--;
-            volt = test_volt_get();
+            volt = test_volt_get(); // take some time
             beep_clicked();
             hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
             PROGBAR_SetValue(hItem, test_progress(run_cnt));
             if (run_cnt <= 0) {
+                beep_finished();
                 enable_all_items(pMsg->hWin, 1);
-                run_flag = 0;
+                run_flag = RUN_IDLE;
+                GUI_EndDialog(wait_diag_handle, 0); 
             }
         } else
             volt = ad7705_read();

@@ -49,3 +49,20 @@ int test_progress(int cnt)
 {
     return ((TEST_LAST_CNT - cnt) * 100 / TEST_LAST_CNT);
 }
+
+void test_enable_all_items(WM_HWIN hWin, int low, int high, int enable)
+{
+    WM_HWIN hItem;
+    int id;
+
+    if (enable)
+        for (id = low; id <= high; id++) {
+            hItem = WM_GetDialogItem(hWin, id);
+            WM_EnableWindow(hItem);
+        }
+    else
+        for (id = low; id <= high; id++) {
+            hItem = WM_GetDialogItem(hWin, id);
+            WM_DisableWindow(hItem);
+        }
+}

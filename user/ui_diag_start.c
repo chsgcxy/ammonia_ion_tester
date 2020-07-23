@@ -48,7 +48,7 @@ extern const GUI_BITMAP bminfor_32px;
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
     {WINDOW_CreateIndirect, "Window", ID_WINDOW_0, 150, 120, 500, 240, 0, 0x0, 0},
     {IMAGE_CreateIndirect, "Image", ID_IMAGE_0, 10, 10, 32, 32, 0, 0, 0},
-    {TEXT_CreateIndirect, "信息", ID_TEXT_HEAD, 52, 14, 80, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "信息", ID_TEXT_HEAD, 52, 14, 200, 25, 0, 0x0, 0},
     {TEXT_CreateIndirect, "line1", ID_TEXT_LINE1, 10, 45, 466, 25, 0, 0x0, 0},
     {TEXT_CreateIndirect, "line2", ID_TEXT_LINE2, 10, 75, 462, 25, 0, 0x0, 0},
     {TEXT_CreateIndirect, "line3", ID_TEXT_LINE3, 10, 105, 462, 25, 0, 0x0, 0},

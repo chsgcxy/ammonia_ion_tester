@@ -48,7 +48,7 @@ struct diag_info g_diag_wait;
 static GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
     {WINDOW_CreateIndirect, "Window", ID_WINDOW_0, 150, 120, 400, 240, 0, 0x0, 0},
     {IMAGE_CreateIndirect, "Image", ID_IMAGE_0, 11, 10, 32, 32, 0, 0, 0},
-    {TEXT_CreateIndirect, "header", ID_TEXT_HEADER, 50, 5, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "header", ID_TEXT_HEADER, 50, 5, 200, 25, 0, 0x0, 0},
     {TEXT_CreateIndirect, "line1", ID_TEXT_lINE1, 5, 45, 380, 25, 0, 0x0, 0},
     {TEXT_CreateIndirect, "line2", ID_TEXT_lINE2, 5, 75, 380, 25, 0, 0x0, 0},
     {TEXT_CreateIndirect, "line3", ID_TEXT_lINE3, 5, 105, 380, 25, 0, 0x0, 0},
@@ -128,7 +128,7 @@ static void _cbDialog(WM_MESSAGE *pMsg)
 WM_HWIN diag_wait_creat(int x0)
 {
     if (x0 < 0)
-        x0 = 150;
+        x0 = 200;
     _aDialogCreate[0].x0 = x0;
     return GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
 }

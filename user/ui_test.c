@@ -136,22 +136,6 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 
 // USER START (Optionally insert additional static code)
 // USER END
-static void enable_all_items(WM_HWIN hWin, int enable)
-{
-    WM_HWIN hItem;
-    int id;
-
-    if (enable)
-        for (id = ID_GRAPH_0; id <= ID_BUTTON_RETURN; id++) {
-            hItem = WM_GetDialogItem(hWin, id);
-            WM_EnableWindow(hItem);
-        }
-    else
-        for (id = ID_GRAPH_0; id <= ID_BUTTON_RETURN; id++) {
-            hItem = WM_GetDialogItem(hWin, id);
-            WM_DisableWindow(hItem);
-        }   
-}
 
 static void graph_clear(void)
 {
@@ -313,7 +297,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             switch (NCode) {
             case WM_NOTIFICATION_CLICKED:
                 beep_clicked();
-                enable_all_items(pMsg->hWin, 0);
+                test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 0);
                 WM_Exec();
                 if (numpad_creat()) {
                     p = numpad_get();
@@ -322,7 +306,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_WEIGHT);
                     EDIT_SetText(hItem, strbuf);
                 }
-                enable_all_items(pMsg->hWin, 1);
+                test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                 break;
             default:
                 break;
@@ -332,7 +316,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             switch (NCode) {
             case WM_NOTIFICATION_CLICKED:
                 beep_clicked();
-                enable_all_items(pMsg->hWin, 0);
+                test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 0);
                 WM_Exec();
                 if (numpad_creat()) {
                     p = numpad_get();
@@ -341,7 +325,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_VOLUME);
                     EDIT_SetText(hItem, strbuf);
                 }
-                enable_all_items(pMsg->hWin, 1);
+                test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                 break;
             default:
                 break;
@@ -351,16 +335,16 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             switch (NCode) {
             case WM_NOTIFICATION_CLICKED:
                 beep_clicked();
-                enable_all_items(pMsg->hWin, 0);
+                test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 0);
                 WM_Exec();
                 if (numpad_creat()) {
                     p = numpad_get();
                     sscanf(p, "%f", &g_td.blockv1);
-                    sprintf(strbuf, "%.2fmV", g_td.blockv1);
+                    sprintf(strbuf, TEST_VOLT_FMT, g_td.blockv1);
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_BLOCKTEST1);
                     EDIT_SetText(hItem, strbuf);
                 }
-                enable_all_items(pMsg->hWin, 1);
+                test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                 break;
             default:
                 break;
@@ -370,16 +354,16 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             switch (NCode) {
             case WM_NOTIFICATION_CLICKED:
                 beep_clicked();
-                enable_all_items(pMsg->hWin, 0);
+                test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 0);
                 WM_Exec();
                 if (numpad_creat()) {
                     p = numpad_get();
                     sscanf(p, "%f", &g_td.blockv2);
-                    sprintf(strbuf, "%.2fmV", g_td.blockv2);
+                    sprintf(strbuf, TEST_VOLT_FMT, g_td.blockv2);
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_BLOCKTEST2);
                     EDIT_SetText(hItem, strbuf);
                 }
-                enable_all_items(pMsg->hWin, 1);
+                test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                 break;
             default:
                 break;
@@ -401,7 +385,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             switch (NCode) {
             case WM_NOTIFICATION_CLICKED:
                 beep_clicked();
-                enable_all_items(pMsg->hWin, 0);
+                test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 0);
                 WM_Exec();
                 g_diag_start.header = "提示";
                 g_diag_start.str_lin1 = "即将进行空白实验1";
@@ -409,7 +393,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 g_diag_start.str_lin3 = "准备好后,点击开始实验以启动检测";
                 result = diag_start_creat();
                 if (result)
-                    enable_all_items(pMsg->hWin, 1);
+                    test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                 else {
                     graph_clear();
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
@@ -432,7 +416,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             switch (NCode) {
             case WM_NOTIFICATION_CLICKED:
                 beep_clicked();
-                enable_all_items(pMsg->hWin, 0);
+                test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 0);
                 WM_Exec();
                 g_diag_start.header = "提示";
                 g_diag_start.str_lin1 = "即将进行空白实验2";
@@ -440,7 +424,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 g_diag_start.str_lin3 = "准备好后,点击开始实验以启动检测";
                 result = diag_start_creat();
                 if (result)
-                    enable_all_items(pMsg->hWin, 1);
+                    test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                 else {
                     graph_clear();
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
@@ -457,7 +441,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             switch (NCode) {
             case WM_NOTIFICATION_CLICKED:
                 beep_clicked();
-                enable_all_items(pMsg->hWin, 0);
+                test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 0);
                 WM_Exec();
                 g_diag_start.header = "提示";
                 g_diag_start.str_lin1 = "即将进行离子分析";
@@ -465,7 +449,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 g_diag_start.str_lin3 = "准备好后,点击开始实验以启动检测";
                 result = diag_start_creat();
                 if (result)
-                    enable_all_items(pMsg->hWin, 1);
+                    test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                 else {
                     graph_clear();
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
@@ -486,19 +470,20 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         if (run_flag != RUN_IDLE) {
             run_cnt--;
             volt = test_volt_get(); // take some time
+            printf("test get volt = %f\r\n", volt);
             beep_clicked();
             hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
             PROGBAR_SetValue(hItem, test_progress(run_cnt));
             if (run_cnt <= 0) {
                 beep_finished();
-                enable_all_items(pMsg->hWin, 1);
+                test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                 run_flag = RUN_IDLE;
-                GUI_EndDialog(wait_diag_handle, 0); 
+                GUI_EndDialog(wait_diag_handle, 0);
             }
         } else
             volt = ad7705_read();
 
-        sprintf(strbuf, "%.2fmV", volt);
+        sprintf(strbuf, TEST_VOLT_FMT, volt);
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLT_VALUE);
         TEXT_SetText(hItem, strbuf);
 

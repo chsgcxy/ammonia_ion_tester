@@ -26,6 +26,9 @@
 #include "main.h"
 #include "beep.h"
 #include "config.h"
+#include "test.h"
+#include "ad770x.h"
+#include "ui_diag.h"
 /*********************************************************************
 *
 *       Defines
@@ -54,40 +57,75 @@
 #define ID_TEXT_RESULT_INFO  (GUI_ID_USER + 0x0D)
 #define ID_TEXT_RESULT_VALUE (GUI_ID_USER + 0x0E)
 
+#define ID_TEXT_HEADER       (GUI_ID_USER + 0x0F)
+
 extern const GUI_FONT GUI_FontHZ_yahei_20;
 extern const GUI_FONT GUI_FontHZ_yahei_16;
 // USER END
 
+enum run_flags {
+    RUN_IDLE = 0x0,
+    RUN_01MG,
+    RUN_001MG,
+    RUN_0001MG
+};
+
+struct check_data {
+    float volt_01;
+    float volt_001;
+    float volt_0001;
+    int done_01;
+    int done_001;
+    int done_0001;
+    float diff_01_001;
+    float diff_001_0001;
+};
+
+static WM_HWIN wait_diag_handle;
+static int run_flag = RUN_IDLE;
+static int run_cnt = TEST_LAST_CNT;
+static float volt = 0.0;
+static struct check_data g_check_data;
+static char strbuf[32];
 /*********************************************************************
 *
 *       _aDialogCreate
 */
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
-    { FRAMEWIN_CreateIndirect, "Framewin", ID_FRAMEWIN_0, 0, 0, 800, 480, 0, 0x0, 0 },
+    { WINDOW_CreateIndirect, "Framewin", ID_FRAMEWIN_0, 0, 0, 800, 480, 0, 0x0, 0 },
+    {TEXT_CreateIndirect, "电极校对", ID_TEXT_HEADER, 300, 2, 200, 40, 0, 0x0, 0},
 
-    { TEXT_CreateIndirect, "guide0", ID_TEXT_GUIDE0, 5, 5, 150, 25, 0, 0x0, 0 },
-    { TEXT_CreateIndirect, "guide1", ID_TEXT_GUIDE1, 5, 40, 600, 25, 0, 0x0, 0 },
-    { TEXT_CreateIndirect, "guide2", ID_TEXT_GUIDE2, 5, 75, 600, 25, 0, 0x0, 0 },
+    { TEXT_CreateIndirect, "guide0", ID_TEXT_GUIDE0, 5, 55, 150, 25, 0, 0x0, 0 },
+    { TEXT_CreateIndirect, "guide1", ID_TEXT_GUIDE1, 5, 90, 600, 25, 0, 0x0, 0 },
+    { TEXT_CreateIndirect, "guide2", ID_TEXT_GUIDE2, 5, 125, 600, 25, 0, 0x0, 0 },
 
-    {LISTVIEW_CreateIndirect, "lv", ID_LISTVIEW_0, 5, 110, 530, 247, 0, 0x0, 0},
+    {LISTVIEW_CreateIndirect, "lv", ID_LISTVIEW_0, 5, 160, 530, 247, 0, 0x0, 0},
 
-    {TEXT_CreateIndirect, "实时电位:", ID_TEXT_VOLT_INFO, 5, 360, 100, 30, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "00.00mV", ID_TEXT_VOLT_VALUE, 120, 365, 100, 30, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "实时电位:", ID_TEXT_VOLT_INFO, 5, 410, 100, 30, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "00.00mV", ID_TEXT_VOLT_VALUE, 120, 415, 100, 30, 0, 0x0, 0},
     
-    {TEXT_CreateIndirect, "结果汇总:", ID_TEXT_RESULT_INFO, 290, 360, 100, 30, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "未测量", ID_TEXT_RESULT_VALUE, 410, 360, 100, 30, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "结果汇总:", ID_TEXT_RESULT_INFO, 290, 410, 100, 30, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "未测量", ID_TEXT_RESULT_VALUE, 410, 410, 100, 30, 0, 0x0, 0},
 
-    {TEXT_CreateIndirect, "测量进度", ID_TEXT_PROGRESS, 5, 392, 120, 30, 0, 0x0, 0},
-    {PROGBAR_CreateIndirect, "Progbar", ID_PROGBAR_0, 120, 395, 415, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "测量进度", ID_TEXT_PROGRESS, 5, 442, 120, 30, 0, 0x0, 0},
+    {PROGBAR_CreateIndirect, "Progbar", ID_PROGBAR_0, 120, 445, 415, 25, 0, 0x0, 0},
 
-    {BUTTON_CreateIndirect, "开始测量", ID_BUTTON_01mg, 560, 155, 200, 40, 0, 0x0, 0},
-    {BUTTON_CreateIndirect, "开始测量", ID_BUTTON_001mg, 560, 235, 200, 40, 0, 0x0, 0},
-    {BUTTON_CreateIndirect, "开始测量", ID_BUTTON_0001mg, 560, 315, 200, 40, 0, 0x0, 0},
+    {BUTTON_CreateIndirect, "开始测量", ID_BUTTON_0001mg, 560, 205, 200, 40, 0, 0x0, 0},
+    {BUTTON_CreateIndirect, "开始测量", ID_BUTTON_001mg, 560, 285, 200, 40, 0, 0x0, 0},
+    {BUTTON_CreateIndirect, "开始测量", ID_BUTTON_01mg, 560, 365, 200, 40, 0, 0x0, 0},
 
-    {BUTTON_CreateIndirect, "返回", ID_BUTTON_RETURN, 680, 5, 100, 40, 0, 0x0, 0}
+    {BUTTON_CreateIndirect, "返回", ID_BUTTON_RETURN, 690, 5, 100, 40, 0, 0x0, 0}
 };
 
 // USER START (Optionally insert additional static code)
+static int check_volt_diff(float diff)
+{
+    if (diff >= -60.0 && diff <= -54.0)
+        return 0;
+    else
+        return 1;
+}
+
 // USER END
 
 /*********************************************************************
@@ -100,6 +138,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     int     Id;
     int i;
     HEADER_Handle hHeader;
+    int     result;
 
     switch (pMsg->MsgId) {
     case WM_INIT_DIALOG:
@@ -107,12 +146,12 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         // Initialization of 'Framewin'
         //
         hItem = pMsg->hWin;
-        FRAMEWIN_SetTitleHeight(hItem, 50);
-        FRAMEWIN_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
-        FRAMEWIN_SetFont(hItem, &GUI_FontHZ_yahei_20);
-        FRAMEWIN_SetTextColor(hItem, GUI_BLACK_33);
-        FRAMEWIN_SetClientColor(hItem, GUI_WHITE);
-        FRAMEWIN_SetText(hItem, "电极校对");
+        WM_CreateTimer(hItem, 0, 1000, 0);
+
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_HEADER);
+        TEXT_SetFont(hItem, &GUI_FontHZ_yahei_20);
+        TEXT_SetTextColor(hItem, GUI_DARKBLUE);
+        TEXT_SetTextAlign(hItem, GUI_TA_HCENTER);
 
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_GUIDE0);
         TEXT_SetFont(hItem, &GUI_FontHZ_yahei_16);
@@ -122,12 +161,12 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_GUIDE1);
         TEXT_SetFont(hItem, &GUI_FontHZ_yahei_16);
         TEXT_SetTextColor(hItem, GUI_BLACK_33);
-        TEXT_SetText(hItem, "取10ml对应浓度氨离子标准溶液至100ml容量瓶中，稀释至刻度");
+        TEXT_SetText(hItem, "取10ml对应浓度氨离子标准溶液至100ml容量瓶中，稀释");
 
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_GUIDE2);
         TEXT_SetFont(hItem, &GUI_FontHZ_yahei_16);
         TEXT_SetTextColor(hItem, GUI_BLACK_33);
-        TEXT_SetText(hItem, "摇匀，点击对应浓度右侧测量按钮进行测量");
+        TEXT_SetText(hItem, "至刻度，摇匀，点击对应浓度右侧测量按钮进行测量");
 
         hItem = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
         LISTVIEW_SetRowHeight(hItem, 40);
@@ -147,9 +186,9 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         LISTVIEW_AddColumn(hItem, 120, "电极斜率", GUI_TA_HCENTER | GUI_TA_VCENTER);
         LISTVIEW_AddColumn(hItem, 120, "测试结果", GUI_TA_HCENTER | GUI_TA_VCENTER);
         LISTVIEW_SetTextColor(hItem, 0, GUI_BLACK_33);
-        LISTVIEW_SetItemText(hItem, 0, 0, "0.1mg/ml");
+        LISTVIEW_SetItemText(hItem, 0, 0, "0.001mg/ml");
         LISTVIEW_SetItemText(hItem, 0, 2, "0.01mg/ml");
-        LISTVIEW_SetItemText(hItem, 0, 4, "0.001mg/ml");
+        LISTVIEW_SetItemText(hItem, 0, 4, "0.1mg/ml");
         LISTVIEW_SetItemText(hItem, 1, 0, "----");
         LISTVIEW_SetItemText(hItem, 1, 2, "----");
         LISTVIEW_SetItemText(hItem, 1, 4, "----");
@@ -186,7 +225,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         PROGBAR_SetBarColor(hItem, 0, GUI_GREEN);
         PROGBAR_SetSkinClassic(hItem);
         PROGBAR_SetMinMax(hItem, 0, 100);
-        PROGBAR_SetValue(hItem, 50);
+        PROGBAR_SetValue(hItem, 100);
 
         // button
         hItem = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_01mg);
@@ -205,13 +244,204 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         BUTTON_SetFont(hItem, &GUI_FontHZ_yahei_16);
         BUTTON_SetTextColor(hItem, BUTTON_CI_UNPRESSED, GUI_DARKRED);
 
+        g_check_data.volt_01 = 0.0;
+        g_check_data.volt_001 = 0.0;
+        g_check_data.volt_0001 = 0.0;
+        g_check_data.done_01 = 0;
+        g_check_data.done_001 = 0;
+        g_check_data.done_0001 = 0;
+        break;
     case WM_NOTIFY_PARENT:
         Id    = WM_GetId(pMsg->hWinSrc);
         NCode = pMsg->Data.v;
         switch(Id) {
+        case ID_BUTTON_RETURN:
+            switch (NCode) {
+            case WM_NOTIFICATION_CLICKED:
+                beep_clicked();
+                printf("run main menu\r\n");
+                g_ui_msg.msg = UI_MSG_LOAD_MENU;
+                GUI_EndDialog(pMsg->hWin, 0);
+                break;
+            default:
+                break;
+            }
+            break;
+        case ID_BUTTON_01mg:
+            switch (NCode) {
+            case WM_NOTIFICATION_CLICKED:
+                beep_clicked();
+                test_enable_all_items(pMsg->hWin, ID_TEXT_GUIDE0, ID_TEXT_HEADER, 0);
+                WM_Exec();
+                g_diag_start.header = "电极校对";
+                g_diag_start.str_lin1 = "取10mL 0.1mg/mL氨离子标准溶液至100mL";
+                g_diag_start.str_lin2 = "容量瓶中，稀释至刻度，并启动磁力搅拌器";
+                g_diag_start.str_lin3 = "准备好后，点击开始实验以启动检测";
+                result = diag_start_creat();
+                if (result)
+                    test_enable_all_items(pMsg->hWin, ID_TEXT_GUIDE0, ID_TEXT_HEADER, 1);
+                else {
+                    hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
+                    PROGBAR_SetValue(hItem, 0);
+                    run_cnt = TEST_LAST_CNT;
+                    run_flag = RUN_01MG;
+                    g_diag_wait.header = "提示";
+                    g_diag_wait.str_lin1 = "正在进行电极校对测量";
+                    g_diag_wait.str_lin2 = NULL;
+                    g_diag_wait.str_lin3 = "请稍后......";
+                    wait_diag_handle = diag_wait_creat(-1);
+                    GUI_ExecCreatedDialog(wait_diag_handle);
+                }
+                break;
+            default:
+                break;
+            }
+            break;
+        case ID_BUTTON_001mg:
+            switch (NCode) {
+            case WM_NOTIFICATION_CLICKED:
+                beep_clicked();
+                test_enable_all_items(pMsg->hWin, ID_TEXT_GUIDE0, ID_TEXT_HEADER, 0);
+                WM_Exec();
+                g_diag_start.header = "电极校对";
+                g_diag_start.str_lin1 = "取10mL 0.01mg/mL氨离子标准溶液至100mL";
+                g_diag_start.str_lin2 = "容量瓶中，稀释至刻度，并启动磁力搅拌器";
+                g_diag_start.str_lin3 = "准备好后,点击开始实验以启动检测";
+                result = diag_start_creat();
+                if (result)
+                    test_enable_all_items(pMsg->hWin, ID_TEXT_GUIDE0, ID_TEXT_HEADER, 1);
+                else {
+                    hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
+                    PROGBAR_SetValue(hItem, 0);
+                    run_cnt = TEST_LAST_CNT;
+                    run_flag = RUN_001MG;
+                    g_diag_wait.header = "提示";
+                    g_diag_wait.str_lin1 = "正在进行电极校对测量";
+                    g_diag_wait.str_lin2 = NULL;
+                    g_diag_wait.str_lin3 = "请稍后......";
+                    wait_diag_handle = diag_wait_creat(-1);
+                    GUI_ExecCreatedDialog(wait_diag_handle);
+                }
+                break;
+            default:
+                break;
+            }
+            break;
+        case ID_BUTTON_0001mg:
+            switch (NCode) {
+            case WM_NOTIFICATION_CLICKED:
+                beep_clicked();
+                test_enable_all_items(pMsg->hWin, ID_TEXT_GUIDE0, ID_TEXT_HEADER, 0);
+                WM_Exec();
+                g_diag_start.header = "电极校对";
+                g_diag_start.str_lin1 = "取10mL 0.001mg/mL氨离子标准溶液至100mL";
+                g_diag_start.str_lin2 = "容量瓶中，稀释至刻度，并启动磁力搅拌器";
+                g_diag_start.str_lin3 = "准备好后,点击开始实验以启动检测";
+                result = diag_start_creat();
+                if (result)
+                    test_enable_all_items(pMsg->hWin, ID_TEXT_GUIDE0, ID_TEXT_HEADER, 1);
+                else {
+                    hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
+                    PROGBAR_SetValue(hItem, 0);
+                    run_cnt = TEST_LAST_CNT;
+                    run_flag = RUN_0001MG;
+                    g_diag_wait.header = "提示";
+                    g_diag_wait.str_lin1 = "正在进行电极校对测量";
+                    g_diag_wait.str_lin2 = NULL;
+                    g_diag_wait.str_lin3 = "请稍后......";
+                    wait_diag_handle = diag_wait_creat(-1);
+                    GUI_ExecCreatedDialog(wait_diag_handle);
+                }
+                break;
+            default:
+                break;
+            }
+            break;
         default:
             break;
         }
+        break;
+    case WM_TIMER:
+        if (run_flag != RUN_IDLE) {
+            run_cnt--;
+            beep_clicked();
+            hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
+            PROGBAR_SetValue(hItem, test_progress(run_cnt));
+
+            if (run_cnt <= 0) {
+                volt = test_volt_get(); // take some time
+                sprintf(strbuf, TEST_VOLT_FMT, volt);
+                printf("test get volt = %f\r\n", volt);
+                beep_finished();
+                hItem = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
+                switch (run_flag) {
+                case RUN_01MG:
+                    g_check_data.volt_01 = volt;
+                    g_check_data.done_01++;
+                    LISTVIEW_SetItemText(hItem, 1, 4, strbuf);
+                    break;
+                case RUN_001MG:
+                    g_check_data.volt_001 = volt;
+                    g_check_data.done_001++;
+                    LISTVIEW_SetItemText(hItem, 1, 2, strbuf);
+                    break;
+                case RUN_0001MG:
+                    g_check_data.volt_0001 = volt;
+                    g_check_data.done_0001++;
+                    LISTVIEW_SetItemText(hItem, 1, 0, strbuf);
+                    break;
+                default:
+                    break;
+                }
+
+                if (g_check_data.done_01 &&
+                    g_check_data.done_001) {
+                    g_check_data.diff_01_001 = g_check_data.volt_01 -
+                        g_check_data.volt_001;
+                    sprintf(strbuf, TEST_VOLT_FMT, g_check_data.diff_01_001);
+                    LISTVIEW_SetItemText(hItem, 2, 3, strbuf);
+                    if (check_volt_diff(g_check_data.diff_01_001))
+                        LISTVIEW_SetItemText(hItem, 3, 3, "fail");
+                    else
+                        LISTVIEW_SetItemText(hItem, 3, 3, "pass");
+                }
+
+                if (g_check_data.done_001 &&
+                    g_check_data.done_0001) {
+                    g_check_data.diff_001_0001 = g_check_data.volt_001 -
+                        g_check_data.volt_0001;
+                    sprintf(strbuf, TEST_VOLT_FMT, g_check_data.diff_001_0001);
+                    LISTVIEW_SetItemText(hItem, 2, 1, strbuf);
+                    if (check_volt_diff(g_check_data.diff_001_0001))
+                        LISTVIEW_SetItemText(hItem, 3, 1, "fail");
+                    else
+                        LISTVIEW_SetItemText(hItem, 3, 1, "pass");
+                }
+
+                if (g_check_data.done_01 &&
+                    g_check_data.done_001 &&
+                    g_check_data.done_0001) {
+                    hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_RESULT_VALUE);
+                    if (!check_volt_diff(g_check_data.diff_001_0001) &&
+                        !check_volt_diff(g_check_data.diff_001_0001))
+                        TEXT_SetText(hItem, "通过");
+                    else
+                        TEXT_SetText(hItem, "未通过");
+                }
+
+                test_enable_all_items(pMsg->hWin, ID_TEXT_GUIDE0, ID_TEXT_HEADER, 1);
+                run_flag = RUN_IDLE;
+                GUI_EndDialog(wait_diag_handle, 0);
+            }
+        } else
+            volt = ad7705_read();
+
+        sprintf(strbuf, TEST_VOLT_FMT, volt);
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLT_VALUE);
+        TEXT_SetText(hItem, strbuf);
+
+        WM_RestartTimer(pMsg->Data.v, 1000);
+        break;
     default:
         WM_DefaultProc(pMsg);
         break;

@@ -186,6 +186,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         LISTVIEW_AddColumn(hItem, 120, "电极斜率", GUI_TA_HCENTER | GUI_TA_VCENTER);
         LISTVIEW_AddColumn(hItem, 120, "测试结果", GUI_TA_HCENTER | GUI_TA_VCENTER);
         LISTVIEW_SetTextColor(hItem, 0, GUI_BLACK_33);
+        LISTVIEW_SetFont(hItem, &GUI_FontHZ_yahei_16);
         LISTVIEW_SetItemText(hItem, 0, 0, "0.001mg/ml");
         LISTVIEW_SetItemText(hItem, 0, 2, "0.01mg/ml");
         LISTVIEW_SetItemText(hItem, 0, 4, "0.1mg/ml");
@@ -364,9 +365,11 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     case WM_TIMER:
         if (run_flag != RUN_IDLE) {
             run_cnt--;
-            beep_clicked();
+            
             hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
             PROGBAR_SetValue(hItem, test_progress(run_cnt));
+            WM_Exec();
+            beep_clicked();
 
             if (run_cnt <= 0) {
                 volt = test_volt_get(); // take some time
@@ -401,9 +404,9 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                     sprintf(strbuf, TEST_VOLT_FMT, g_check_data.diff_01_001);
                     LISTVIEW_SetItemText(hItem, 2, 3, strbuf);
                     if (check_volt_diff(g_check_data.diff_01_001))
-                        LISTVIEW_SetItemText(hItem, 3, 3, "fail");
+                        LISTVIEW_SetItemText(hItem, 3, 3, "失败");
                     else
-                        LISTVIEW_SetItemText(hItem, 3, 3, "pass");
+                        LISTVIEW_SetItemText(hItem, 3, 3, "通过");
                 }
 
                 if (g_check_data.done_001 &&
@@ -413,25 +416,33 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                     sprintf(strbuf, TEST_VOLT_FMT, g_check_data.diff_001_0001);
                     LISTVIEW_SetItemText(hItem, 2, 1, strbuf);
                     if (check_volt_diff(g_check_data.diff_001_0001))
-                        LISTVIEW_SetItemText(hItem, 3, 1, "fail");
+                        LISTVIEW_SetItemText(hItem, 3, 1, "失败");
                     else
-                        LISTVIEW_SetItemText(hItem, 3, 1, "pass");
+                        LISTVIEW_SetItemText(hItem, 3, 1, "通过");
                 }
+
+                GUI_EndDialog(wait_diag_handle, 0);
 
                 if (g_check_data.done_01 &&
                     g_check_data.done_001 &&
                     g_check_data.done_0001) {
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_RESULT_VALUE);
+                    g_diag_ok.header = "结果";
+                    g_diag_ok.str_lin1 = "电极校对结果为：";
                     if (!check_volt_diff(g_check_data.diff_001_0001) &&
-                        !check_volt_diff(g_check_data.diff_001_0001))
+                            !check_volt_diff(g_check_data.diff_001_0001)) {
                         TEXT_SetText(hItem, "通过");
-                    else
+                        g_diag_ok.str_lin2 = "通过";
+                        g_diag_ok.str_lin3 = "满足实验要求，可以进行实验";
+                    } else {
                         TEXT_SetText(hItem, "未通过");
+                        g_diag_ok.str_lin2 = "未通过";
+                        g_diag_ok.str_lin3 = "请及时检查或更换电极";
+                    }
+                    diag_ok_creat();
                 }
-
                 test_enable_all_items(pMsg->hWin, ID_TEXT_GUIDE0, ID_TEXT_HEADER, 1);
                 run_flag = RUN_IDLE;
-                GUI_EndDialog(wait_diag_handle, 0);
             }
         } else
             volt = ad7705_read();

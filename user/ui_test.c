@@ -107,10 +107,10 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
     {TEXT_CreateIndirect, "00.00mV", ID_TEXT_VOLT_VALUE, 120, 445, 100, 30, 0, 0x0, 0},
 
     {TEXT_CreateIndirect, "试样质量", ID_TEXT_WEIGHT, 310, 55, 100, 30, 0, 0x0, 0},
-    {EDIT_CreateIndirect, "10.00g", ID_EDIT_WEIGHT, 500, 55, 150, 30, 0, 0x0, 0},
+    {EDIT_CreateIndirect, "10.000g", ID_EDIT_WEIGHT, 500, 55, 150, 30, 0, 0x0, 0},
 
     {TEXT_CreateIndirect, "滤液体积", ID_TEXT_VOLUME, 310, 105, 100, 30, 0, 0x0, 0},
-    {EDIT_CreateIndirect, "100.00ml", ID_EDIT_VOLUME, 500, 105, 150, 30, 0, 0x0, 0},
+    {EDIT_CreateIndirect, "20.00ml", ID_EDIT_VOLUME, 500, 105, 150, 30, 0, 0x0, 0},
 
     {TEXT_CreateIndirect, "空白实验1电极电位", ID_TEXT_BLOCKTEST1, 310, 155, 190, 30, 0, 0x0, 0 },
     {EDIT_CreateIndirect, "0.00mV", ID_EDIT_BLOCKTEST1, 500, 155, 150, 30, 0, 0x0, 0},
@@ -206,7 +206,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         EDIT_SetTextColor(hItem, EDIT_CI_ENABELD, GUI_DARKGREEN);
         EDIT_SetFont(hItem, GUI_FONT_24_ASCII);
         EDIT_SetTextAlign(hItem, TEXT_CF_HCENTER | TEXT_CF_VCENTER);
-        EDIT_SetText(hItem, "10.00g");
+        EDIT_SetText(hItem, "10.000g");
 
         // volume
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLUME);
@@ -217,7 +217,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         EDIT_SetTextColor(hItem, EDIT_CI_ENABELD, GUI_DARKGREEN);
         EDIT_SetFont(hItem, GUI_FONT_24_ASCII);
         EDIT_SetTextAlign(hItem, TEXT_CF_HCENTER | TEXT_CF_VCENTER);
-        EDIT_SetText(hItem, "100.00ml");
+        EDIT_SetText(hItem, "20.00ml");
 
         // block test 1
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_BLOCKTEST1);
@@ -288,6 +288,9 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         hItem = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_RETURN);
         BUTTON_SetFont(hItem, &GUI_FontHZ_yahei_16);
         BUTTON_SetTextColor(hItem, BUTTON_CI_UNPRESSED, GUI_DARKRED);
+
+        g_td.volume = 20.00;
+        g_td.weight = 10.000;
         break;
     case WM_NOTIFY_PARENT:
         Id    = WM_GetId(pMsg->hWinSrc);
@@ -302,7 +305,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 if (numpad_creat()) {
                     p = numpad_get();
                     sscanf(p, "%f", &g_td.weight);
-                    sprintf(strbuf, "%.2fg", g_td.weight);
+                    sprintf(strbuf, "%.3fg", g_td.weight);
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_WEIGHT);
                     EDIT_SetText(hItem, strbuf);
                 }

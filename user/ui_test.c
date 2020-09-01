@@ -80,6 +80,12 @@ enum run_flags{
     RUN_TEST
 };
 
+struct test_ctrl {
+    int block1_finished;
+    int block2_finished;
+    int block_ready;
+};
+
 extern const GUI_FONT GUI_FontHZ_yahei_20;
 extern const GUI_FONT GUI_FontHZ_yahei_16;
 // USER END
@@ -89,6 +95,7 @@ static GRAPH_DATA_Handle pdataGRP;
 static WM_HWIN wait_diag_handle;
 static char strbuf[32];
 struct test_data g_td;
+struct test_ctrl tctrl;
 static float volt = 0.0;
 static int run_flag = RUN_IDLE;
 static int run_cnt = TEST_LAST_CNT;
@@ -143,6 +150,20 @@ static void graph_clear(void)
     GRAPH_SCALE_SetOff(hScaleH, 0);
     GRAPH_DATA_XY_SetOffX(pdataGRP, 0);
     point.x = 0;
+}
+
+static void update_block_volt(WM_HWIN hWin)
+{
+    WM_HWIN hItem;
+    char buf[32];
+    
+    if (tctrl.block1_finished && tctrl.block2_finished) {
+        g_td.volt_blockagv = (g_td.volt_block1 + g_td.volt_block2) / 2;
+        tctrl.block_ready++;
+        hItem = WM_GetDialogItem(hWin, ID_TEXT_BLOCKTEST_VOLT_VALUE);
+        sprintf(buf, TEST_VOLT_FMT, g_td.volt_blockagv);
+        TEXT_SetText(hItem, buf);
+    }
 }
 /*********************************************************************
 *
@@ -282,15 +303,19 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         PROGBAR_SetBarColor(hItem, 0, GUI_GREEN);
         PROGBAR_SetSkinClassic(hItem);
         PROGBAR_SetMinMax(hItem, 0, 100);
-        PROGBAR_SetValue(hItem, 100);
+        PROGBAR_SetValue(hItem, 0);
 
         // return
         hItem = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_RETURN);
         BUTTON_SetFont(hItem, &GUI_FontHZ_yahei_16);
         BUTTON_SetTextColor(hItem, BUTTON_CI_UNPRESSED, GUI_DARKRED);
 
-        g_td.volume = 20.00;
-        g_td.weight = 10.000;
+        g_td.volume_sample = 20.00;
+        g_td.weight_sample = 10.000;
+
+        tctrl.block1_finished = 0;
+        tctrl.block2_finished = 0;
+        tctrl.block_ready = 0;
         break;
     case WM_NOTIFY_PARENT:
         Id    = WM_GetId(pMsg->hWinSrc);
@@ -304,8 +329,8 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 WM_Exec();
                 if (numpad_creat()) {
                     p = numpad_get();
-                    sscanf(p, "%f", &g_td.weight);
-                    sprintf(strbuf, "%.3fg", g_td.weight);
+                    sscanf(p, "%f", &g_td.weight_sample);
+                    sprintf(strbuf, "%.3fg", g_td.weight_sample);
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_WEIGHT);
                     EDIT_SetText(hItem, strbuf);
                 }
@@ -323,8 +348,8 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 WM_Exec();
                 if (numpad_creat()) {
                     p = numpad_get();
-                    sscanf(p, "%f", &g_td.volume);
-                    sprintf(strbuf, "%.2fml", g_td.volume);
+                    sscanf(p, "%f", &g_td.volume_sample);
+                    sprintf(strbuf, "%.2fml", g_td.volume_sample);
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_VOLUME);
                     EDIT_SetText(hItem, strbuf);
                 }
@@ -342,10 +367,12 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 WM_Exec();
                 if (numpad_creat()) {
                     p = numpad_get();
-                    sscanf(p, "%f", &g_td.blockv1);
-                    sprintf(strbuf, TEST_VOLT_FMT, g_td.blockv1);
+                    sscanf(p, "%f", &g_td.volt_block1);
+                    sprintf(strbuf, TEST_VOLT_FMT, g_td.volt_block1);
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_BLOCKTEST1);
                     EDIT_SetText(hItem, strbuf);
+                    tctrl.block1_finished++;
+                    update_block_volt(pMsg->hWin);
                 }
                 test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                 break;
@@ -361,10 +388,12 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 WM_Exec();
                 if (numpad_creat()) {
                     p = numpad_get();
-                    sscanf(p, "%f", &g_td.blockv2);
-                    sprintf(strbuf, TEST_VOLT_FMT, g_td.blockv2);
+                    sscanf(p, "%f", &g_td.volt_block2);
+                    sprintf(strbuf, TEST_VOLT_FMT, g_td.volt_block2);
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_BLOCKTEST2);
                     EDIT_SetText(hItem, strbuf);
+                    tctrl.block2_finished++;
+                    update_block_volt(pMsg->hWin);
                 }
                 test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                 break;
@@ -446,19 +475,29 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 beep_clicked();
                 test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 0);
                 WM_Exec();
-                g_diag_start.header = "提示";
-                g_diag_start.str_lin1 = "即将进行离子分析";
-                g_diag_start.str_lin2 = "请将空白试样放置到试样台,并启动磁力搅拌器";
-                g_diag_start.str_lin3 = "准备好后,点击开始实验以启动检测";
-                result = diag_start_creat();
-                if (result)
+
+                if (tctrl.block_ready) {
+                    g_diag_start.header = "提示";
+                    g_diag_start.str_lin1 = "即将进行离子分析";
+                    g_diag_start.str_lin2 = "请将空白试样放置到试样台,并启动磁力搅拌器";
+                    g_diag_start.str_lin3 = "准备好后,点击开始实验以启动检测";
+                    result = diag_start_creat();
+                    if (result)
+                        test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
+                    else {
+                        graph_clear();
+                        hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
+                        PROGBAR_SetValue(hItem, 0);
+                        run_cnt = TEST_LAST_CNT;
+                        run_flag = RUN_TEST;
+                    }
+                } else {
+                    g_diag_ok.header = "提示";
+                    g_diag_ok.str_lin1 = "无法进行氨离子测量";
+                    g_diag_ok.str_lin2 = "请先进行空白实验或输入空白实验电压值";
+                    g_diag_ok.str_lin3 = NULL;
+                    diag_ok_creat();
                     test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
-                else {
-                    graph_clear();
-                    hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
-                    PROGBAR_SetValue(hItem, 0);
-                    run_cnt = TEST_LAST_CNT;
-                    run_flag = RUN_TEST;
                 }
                 break;
             default:
@@ -472,17 +511,47 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     case WM_TIMER:
         if (run_flag != RUN_IDLE) {
             run_cnt--;
-            volt = test_volt_get(); // take some time
-            printf("test get volt = %f\r\n", volt);
-            beep_clicked();
             hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
             PROGBAR_SetValue(hItem, test_progress(run_cnt));
+            volt = test_volt_get(); // take some time
+            WM_Exec();
+
             if (run_cnt <= 0) {
                 beep_finished();
+                switch (run_flag) {
+                case RUN_BLOCK1:
+                    g_td.volt_block1 = volt;
+                    tctrl.block1_finished++;
+                    update_block_volt(pMsg->hWin);
+                    g_diag_ok.header = "空白实验1";
+                    g_diag_ok.str_lin1 = "完成空白实验1,采集到电压值为:";
+                    sprintf(strbuf, TEST_VOLT_FMT, volt);
+                    g_diag_ok.str_lin2 = strbuf;
+                    g_diag_ok.str_lin3 = NULL;
+                    diag_ok_creat();
+                    break;
+                case RUN_BLOCK2:
+                    g_td.volt_block2 = volt;
+                    tctrl.block1_finished++;
+                    update_block_volt(pMsg->hWin);
+                    g_diag_ok.header = "空白实验2";
+                    g_diag_ok.str_lin1 = "完成空白实验2,采集到电压值为:";
+                    sprintf(strbuf, TEST_VOLT_FMT, volt);
+                    g_diag_ok.str_lin2 = strbuf;
+                    g_diag_ok.str_lin3 = NULL;
+                    diag_ok_creat();
+                    break;
+                case RUN_TEST:NULL
+                    g_td.volt_sample = volt;
+                    break;
+                default:
+                    break;
+                }
                 test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                 run_flag = RUN_IDLE;
                 GUI_EndDialog(wait_diag_handle, 0);
-            }
+            } else
+                beep_clicked();
         } else
             volt = ad7705_read();
 

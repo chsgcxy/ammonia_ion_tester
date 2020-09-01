@@ -368,14 +368,16 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             
             hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
             PROGBAR_SetValue(hItem, test_progress(run_cnt));
-            WM_Exec();
-            beep_clicked();
 
             if (run_cnt <= 0) {
                 volt = test_volt_get(); // take some time
                 sprintf(strbuf, TEST_VOLT_FMT, volt);
-                printf("test get volt = %f\r\n", volt);
+                hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLT_VALUE);
+                TEXT_SetText(hItem, strbuf);
+                WM_Exec(); // update progress after got volt
                 beep_finished();
+
+                /* update listview */
                 hItem = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
                 switch (run_flag) {
                 case RUN_01MG:
@@ -397,6 +399,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                     break;
                 }
 
+                /* auto update result after run */
                 if (g_check_data.done_01 &&
                     g_check_data.done_001) {
                     g_check_data.diff_01_001 = g_check_data.volt_01 -
@@ -423,6 +426,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 
                 GUI_EndDialog(wait_diag_handle, 0);
 
+                /* Analyze the final result */
                 if (g_check_data.done_01 &&
                     g_check_data.done_001 &&
                     g_check_data.done_0001) {
@@ -443,13 +447,22 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 }
                 test_enable_all_items(pMsg->hWin, ID_TEXT_GUIDE0, ID_TEXT_HEADER, 1);
                 run_flag = RUN_IDLE;
+            } else {
+                /* on progress not finished */
+                volt = ad7705_read();
+                sprintf(strbuf, TEST_VOLT_FMT, volt);
+                hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLT_VALUE);
+                TEXT_SetText(hItem, strbuf);
+                WM_Exec();
+                beep_clicked(); // update progress after update UI
             }
-        } else
+        } else {
+            /* idle status */
             volt = ad7705_read();
-
-        sprintf(strbuf, TEST_VOLT_FMT, volt);
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLT_VALUE);
-        TEXT_SetText(hItem, strbuf);
+            sprintf(strbuf, TEST_VOLT_FMT, volt);
+            hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLT_VALUE);
+            TEXT_SetText(hItem, strbuf);
+        }
 
         WM_RestartTimer(pMsg->Data.v, 1000);
         break;

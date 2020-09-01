@@ -8,12 +8,12 @@
 #define TEST_VOLT_FMT    "%.2fmV"
 
 struct test_data {
-    float weight;
-    float volume;
-    float blockv1;
-    float blockv2;
-    float blockagv;
-    float testv;
+    float weight_sample;
+    float volume_sample;
+    float volt_block1;
+    float volt_block2;
+    float volt_blockagv;
+    float volt_sample;
 };
 
 extern int test_init(void);

@@ -22,424 +22,154 @@
 // USER END
 
 #include "DIALOG.h"
-#include "main.h"
 #include "beep.h"
+#include "main.h"
 #include "string.h"
-#include "report.h"
 #include "stdio.h"
+#include "ui_diag.h"
 /*********************************************************************
 *
 *       Defines
 *
 **********************************************************************
 */
-#define ID_WINDOW_0          (GUI_ID_USER + 0x00)
-#define ID_TEXT_0            (GUI_ID_USER + 0x01)
-#define ID_TEXT_1            (GUI_ID_USER + 0x03)
-#define ID_TEXT_2            (GUI_ID_USER + 0x04)
-#define ID_TEXT_3            (GUI_ID_USER + 0x05)
-#define ID_TEXT_4            (GUI_ID_USER + 0x06)
-#define ID_BUTTON_0          (GUI_ID_USER + 0x07)
-#define ID_BUTTON_1          (GUI_ID_USER + 0x08)
-#define ID_BUTTON_2          (GUI_ID_USER + 0x09)
-#define ID_TEXT_PPM          (GUI_ID_USER + 0x0A)
-#define ID_TEXT_PPM_VALUE    (GUI_ID_USER + 0x0B)
-// USER START (Optionally insert additional defines)
-// USER END
+#define ID_WINDOW_0     (GUI_ID_USER + 0x00)
+#define ID_TEXT_HEAD    (GUI_ID_USER + 0x01)
+#define ID_IMAGE_0      (GUI_ID_USER + 0x02)
 
-/*********************************************************************
-*
-*       Static data
-*
-**********************************************************************
-*/
+#define ID_TEXT_ITEM1   (GUI_ID_USER + 0x03)
+#define ID_TEXT_ITEM2   (GUI_ID_USER + 0x04)
+#define ID_TEXT_ITEM3   (GUI_ID_USER + 0x05)
+#define ID_TEXT_ITEM4   (GUI_ID_USER + 0x06)
+#define ID_TEXT_ITEM5   (GUI_ID_USER + 0x07)
+#define ID_TEXT_ITEM6   (GUI_ID_USER + 0x08)
+#define ID_TEXT_ITEM7   (GUI_ID_USER + 0x09)
+#define ID_TEXT_ITEM8   (GUI_ID_USER + 0x0a)
+
+#define ID_TEXT_VALUE1  (GUI_ID_USER + 0x0b)
+#define ID_TEXT_VALUE2  (GUI_ID_USER + 0x0c)
+#define ID_TEXT_VALUE3  (GUI_ID_USER + 0x0d)
+#define ID_TEXT_VALUE4  (GUI_ID_USER + 0x0e)
+#define ID_TEXT_VALUE5  (GUI_ID_USER + 0x0f)
+#define ID_TEXT_VALUE6  (GUI_ID_USER + 0x10)
+#define ID_TEXT_VALUE7  (GUI_ID_USER + 0x11)
+#define ID_TEXT_VALUE8  (GUI_ID_USER + 0x12)
+
+#define ID_BUTTON_PRINT (GUI_ID_USER + 0x13)
+#define ID_BUTTON_QUIT  (GUI_ID_USER + 0x14)
+
 extern const GUI_FONT GUI_FontHZ_yahei_16;
-// USER START (Optionally insert additional static data)
-// USER END
+extern const GUI_BITMAP bminfor_32px;
 
-/*********************************************************************
-*
-*       _aDialogCreate
-*/
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
-    {WINDOW_CreateIndirect, "Window", ID_WINDOW_0, 151, 119, 500, 240, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "实验结果", ID_TEXT_0, 182, 12, 133, 25, 0, 0x64, 0},
-    
-    {TEXT_CreateIndirect, "Text", ID_TEXT_1, 10, 60, 250, 25, 0, 0x64, 0},
-    {TEXT_CreateIndirect, "Text", ID_TEXT_2, 275, 60, 150, 25, 0, 0x64, 0},
-    
-    {TEXT_CreateIndirect, "Text", ID_TEXT_3, 10, 100, 250, 25, 0, 0x64, 0},
-    {TEXT_CreateIndirect, "Text", ID_TEXT_4, 275, 100, 150, 25, 0, 0x64, 0},
-    
-    {TEXT_CreateIndirect, "PPM", ID_TEXT_PPM, 10, 140, 250, 25, 0, 0x64, 0},
-    {TEXT_CreateIndirect, "0.02mol/L", ID_TEXT_PPM_VALUE, 275, 140, 150, 25, 0, 0x64, 0},
-
-    {BUTTON_CreateIndirect, "Button", ID_BUTTON_0, 10, 190, 120, 40, 0, 0x0, 0},
-    {BUTTON_CreateIndirect, "Button", ID_BUTTON_1, 187, 190, 120, 40, 0, 0x0, 0},
-    {BUTTON_CreateIndirect, "Button", ID_BUTTON_2, 368, 190, 120, 40, 0, 0x0, 0},
+    {WINDOW_CreateIndirect, "Window", ID_WINDOW_0, 150, 70, 500, 360, 0, 0x0, 0},
+    {IMAGE_CreateIndirect, "Image", ID_IMAGE_0, 10, 10, 32, 32, 0, 0, 0},
+    {TEXT_CreateIndirect, "header", ID_TEXT_HEAD, 52, 14, 200, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "line1", ID_TEXT_ITEM1, 10, 45, 300, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value1", ID_TEXT_VALUE1,320, 45, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "line2", ID_TEXT_ITEM2, 10, 75, 300, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value2", ID_TEXT_VALUE2,320, 75, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "line3", ID_TEXT_ITEM3, 10, 105, 300, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value3", ID_TEXT_VALUE3,320, 105, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "line4", ID_TEXT_ITEM4, 10, 135, 300, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value4", ID_TEXT_VALUE4,320, 135, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "line5", ID_TEXT_ITEM5, 10, 165, 300, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value5", ID_TEXT_VALUE5,320, 165, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "line6", ID_TEXT_ITEM6, 10, 195, 300, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value6", ID_TEXT_VALUE6, 320, 195, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "line7", ID_TEXT_ITEM7, 10, 225, 300, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value7", ID_TEXT_VALUE7, 320, 225, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "line8", ID_TEXT_ITEM8, 10, 255, 300, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value8", ID_TEXT_VALUE8, 320, 255, 100, 25, 0, 0x0, 0},
+    {BUTTON_CreateIndirect, "打印", ID_BUTTON_PRINT, 20, 310, 140, 40, 0, 0x0, 0},
+    {BUTTON_CreateIndirect, "完成", ID_BUTTON_QUIT, 340, 310, 140, 40, 0, 0x0, 0},
     // USER START (Optionally insert additional widgets)
     // USER END
 };
 
-/*********************************************************************
-*
-*       Static code
-*
-**********************************************************************
-*/
-static struct exper_stat *stat;
-// USER START (Optionally insert additional static code)
-// USER END
+struct diag_result g_diag_res;
 
-static void ctrl_all_items(WM_HWIN hWin, int enable)
-{
-    WM_HWIN hItem;
-    int id;
-
-    for (id = ID_BUTTON_0; id <= ID_BUTTON_2; id++) {
-        hItem = WM_GetDialogItem(hWin, id);
-        if (enable)
-            WM_EnableWindow(hItem);
-        else
-            WM_DisableWindow(hItem);
-    }    
-}
-
-/*********************************************************************
-*
-*       _cbDialog
-*/
 static void _cbDialog(WM_MESSAGE *pMsg)
 {
     WM_HWIN hItem;
     int NCode;
     int Id;
-    char buf[16];
+    int i;
     // USER START (Optionally insert additional variables)
     // USER END
 
-    switch (pMsg->MsgId)
-    {
+    switch (pMsg->MsgId) {
     case WM_INIT_DIALOG:
-        //
-        // Initialization of 'Window'
-        //
         hItem = pMsg->hWin;
         WINDOW_SetBkColor(hItem, GUI_DARKBLUE);
-        //
-        // Initialization of 'Text'
-        //
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
+
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_HEAD);
         TEXT_SetFont(hItem, &GUI_FontHZ_yahei_16);
-        TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
-        TEXT_SetTextColor(hItem, GUI_MAKE_COLOR(0x00FFFFFF));
-        //
-        // Initialization of 'Text'
-        //
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
-        TEXT_SetFont(hItem, &GUI_FontHZ_yahei_16);
-        TEXT_SetTextColor(hItem, GUI_MAKE_COLOR(0x00FFFFFF));
-        switch (stat->stat) {
-        case EXPER_STAT_DROPPER_FINISHED:
-            TEXT_SetText(hItem, "滴定液用量");
-            break;
-        case EXPER_STAT_AGNO3_EXTEST_FINISHED2:
-        case EXPER_STAT_BLOCK_EXTEST_FINISHED2:
-        case EXPER_STAT_CL_EXTEST_FINISHED2:
-            TEXT_SetText(hItem, "10mL时AgNO3用量");
-            break;
-        default:
-            TEXT_SetText(hItem, "AgNO3用量");
-            break;
-        }
-        //
-        // Initialization of 'Text'
-        //
-        switch (stat->stat) {
-        case EXPER_STAT_AGNO3_FINISHED:
-        case EXPER_STAT_DROPPER_FINISHED:
-        case EXPER_STAT_AGNO3_EXTEST_FINISHED2:
-            sprintf(buf, "%.2fmL", stat->data.agno3_agno3_used);
-            break;
-        case EXPER_STAT_BLOCK_FINISHED:
-        case EXPER_STAT_BLOCK_EXTEST_FINISHED2:
-            sprintf(buf, "%.2fmL", stat->data.block_agno3_used);
-            break;
-        case EXPER_STAT_CL_FINISHED:
-        case EXPER_STAT_STAND_FINISHED:
-        case EXPER_STAT_CL_EXTEST_FINISHED2:
-            sprintf(buf, "%.2fmL", stat->data.cl_agno3_used);
-            break;
-        default:
-            break;
-        }
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
-        TEXT_SetFont(hItem, GUI_FONT_24_1);
-        TEXT_SetText(hItem, buf);
-        TEXT_SetTextColor(hItem, GUI_MAKE_COLOR(0x00FFFFFF));
-        //
-        // Initialization of 'Text'
-        //
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
-        TEXT_SetFont(hItem, &GUI_FontHZ_yahei_16);
-        TEXT_SetTextColor(hItem, GUI_MAKE_COLOR(0x00FFFFFF));
-        switch (stat->stat) {
-        case EXPER_STAT_AGNO3_FINISHED:
-            TEXT_SetText(hItem, "AgNO3浓度");
-            break;
-        case EXPER_STAT_BLOCK_FINISHED:
-        case EXPER_STAT_DROPPER_FINISHED:
+        TEXT_SetTextColor(hItem, GUI_WHITE);
+        if (g_diag_start.header)
+            TEXT_SetText(hItem, g_diag_res.header);
+        else
             WM_HideWindow(hItem);
-            break;
-        case EXPER_STAT_CL_FINISHED:
-            TEXT_SetText(hItem, "水泥氯离子质量分数");
-            break;
-        case EXPER_STAT_STAND_FINISHED:
-            TEXT_SetText(hItem, "氯离子浓度");
-            break;
-        case EXPER_STAT_AGNO3_EXTEST_FINISHED2:
-        case EXPER_STAT_BLOCK_EXTEST_FINISHED2:
-        case EXPER_STAT_CL_EXTEST_FINISHED2:
-            TEXT_SetText(hItem, "20mL时AgNO3用量");
-            break;
-        default:
-            break;
-        }
-        //
-        // Initialization of 'Text'
-        //
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
-        TEXT_SetFont(hItem, GUI_FONT_24_1);
-        TEXT_SetTextColor(hItem, GUI_MAKE_COLOR(0x00FFFFFF));
-        switch (stat->stat) {
-        case EXPER_STAT_AGNO3_FINISHED:
-            sprintf(buf, "%.4fmol/L", stat->data.agno3_dosage);
-            TEXT_SetText(hItem, buf);
-            break;
-        case EXPER_STAT_BLOCK_FINISHED:
-        case EXPER_STAT_DROPPER_FINISHED:
-            WM_HideWindow(hItem);
-            break;
-        case EXPER_STAT_CL_FINISHED:
-            sprintf(buf, "%.3f%%", stat->data.cl_percentage);
-            TEXT_SetText(hItem, buf);
-            break;
-        case EXPER_STAT_STAND_FINISHED:
-            sprintf(buf, "%fmol/L", stat->data.cl_dosage);
-            TEXT_SetText(hItem, buf);
-            break;
-        case EXPER_STAT_AGNO3_EXTEST_FINISHED2:
-            sprintf(buf, "%.2fmL", stat->data.agno3_agno3_used2);
-            TEXT_SetText(hItem, buf);
-            break;
-        case EXPER_STAT_BLOCK_EXTEST_FINISHED2:
-            sprintf(buf, "%.2fmL", stat->data.block_agno3_used2);
-            TEXT_SetText(hItem, buf);
-            break;
-        case EXPER_STAT_CL_EXTEST_FINISHED2:
-            sprintf(buf, "%.2fmL", stat->data.cl_agno3_used2);
-            TEXT_SetText(hItem, buf);
-            break;
-        default:
-            break;
+
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_IMAGE_0);
+        IMAGE_SetBitmap(hItem, &bminfor_32px);
+
+        for (i = 0; i < g_diag_res.cnt; i++) {
+            hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_ITEM1 + i);
+            TEXT_SetFont(hItem, &GUI_FontHZ_yahei_16);
+            TEXT_SetTextColor(hItem, GUI_WHITE);
+            TEXT_SetText(hItem, g_diag_res.items[i].item);
+
+            hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VALUE1 + i);
+            TEXT_SetFont(hItem, GUI_FONT_24_ASCII);
+            TEXT_SetTextColor(hItem, GUI_WHITE);
+            TEXT_SetText(hItem, g_diag_res.items[i].value);
         }
 
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_PPM);
-        TEXT_SetFont(hItem, &GUI_FontHZ_yahei_16);
-        TEXT_SetTextColor(hItem, GUI_MAKE_COLOR(0x00FFFFFF));
-        switch (stat->stat) {
-        case EXPER_STAT_AGNO3_FINISHED:
-        case EXPER_STAT_BLOCK_FINISHED:
-        case EXPER_STAT_CL_FINISHED:
-        case EXPER_STAT_DROPPER_FINISHED:
-        case EXPER_STAT_BLOCK_EXTEST_FINISHED2:
+        for (; i < RESULT_ITEMS_MAX; i++) {
+            hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_ITEM1 + i);
             WM_HideWindow(hItem);
-            break;
-        case EXPER_STAT_STAND_FINISHED:
-            break;
-        case EXPER_STAT_AGNO3_EXTEST_FINISHED2:
-            TEXT_SetText(hItem, "AgNO3浓度");
-            break;
-        case EXPER_STAT_CL_EXTEST_FINISHED2:
-            TEXT_SetText(hItem, "试样氯离子质量分数");
-            break;
-        default:
-            break;
+            hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VALUE1 + i);
+            WM_HideWindow(hItem);
         }
 
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_PPM_VALUE);
-        TEXT_SetFont(hItem, GUI_FONT_24_1);
-        TEXT_SetTextColor(hItem, GUI_MAKE_COLOR(0x00FFFFFF));
-        switch (stat->stat) {
-        case EXPER_STAT_AGNO3_FINISHED:
-        case EXPER_STAT_BLOCK_FINISHED:
-        case EXPER_STAT_CL_FINISHED:
-        case EXPER_STAT_DROPPER_FINISHED:
-        case EXPER_STAT_BLOCK_EXTEST_FINISHED2:
-            WM_HideWindow(hItem);
-            break;
-        case EXPER_STAT_STAND_FINISHED:
-            sprintf(buf, "%.1f", stat->data.ppm);
-            TEXT_SetText(hItem, buf);
-            break;
-        case EXPER_STAT_AGNO3_EXTEST_FINISHED2:
-            sprintf(buf, "%.4fmol/L", stat->data.agno3_dosage);
-            TEXT_SetText(hItem, buf);
-            break;
-        case EXPER_STAT_CL_EXTEST_FINISHED2:
-            sprintf(buf, "%.3f%%", stat->data.cl_percentage);
-            TEXT_SetText(hItem, buf);
-            break;
-        default:
-            break;
-        }
-
-        //
-        // Initialization of 'Button'
-        //
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_0);
-        BUTTON_SetTextColor(hItem, 0, GUI_BLUE);
-        switch (stat->stat) {
-        case EXPER_STAT_AGNO3_FINISHED:
-        case EXPER_STAT_BLOCK_FINISHED:
-        case EXPER_STAT_DROPPER_FINISHED:
-        case EXPER_STAT_AGNO3_EXTEST_FINISHED2:
-        case EXPER_STAT_BLOCK_EXTEST_FINISHED2:
-            WM_HideWindow(hItem);
-            break;
-        case EXPER_STAT_CL_FINISHED:
-        case EXPER_STAT_STAND_FINISHED:
-        case EXPER_STAT_CL_EXTEST_FINISHED2:
-            BUTTON_SetFont(hItem, &GUI_FontHZ_yahei_16);
-            BUTTON_SetText(hItem, "打印");
-            break;
-        default:
-            break;
-        }
-        //
-        // Initialization of 'Button'
-        //
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_1);
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_PRINT);
         BUTTON_SetFont(hItem, &GUI_FontHZ_yahei_16);
         BUTTON_SetTextColor(hItem, 0, GUI_BLUE);
-        switch (stat->stat) {
-        case EXPER_STAT_AGNO3_FINISHED:
-        case EXPER_STAT_BLOCK_FINISHED:
-        case EXPER_STAT_DROPPER_FINISHED:
-        case EXPER_STAT_AGNO3_EXTEST_FINISHED2:
-        case EXPER_STAT_BLOCK_EXTEST_FINISHED2:
-            BUTTON_SetText(hItem, "确定");
-            break;
-        case EXPER_STAT_CL_FINISHED:
-        case EXPER_STAT_STAND_FINISHED:
-        case EXPER_STAT_CL_EXTEST_FINISHED2:
-            WM_HideWindow(hItem);
-            break;
-        default:
-            break;
-        }
-        //
-        // Initialization of 'Button'
-        //
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_2);
+
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_QUIT);
         BUTTON_SetFont(hItem, &GUI_FontHZ_yahei_16);
         BUTTON_SetTextColor(hItem, 0, GUI_BLUE);
-        switch (stat->stat) {
-        case EXPER_STAT_AGNO3_FINISHED:
-        case EXPER_STAT_BLOCK_FINISHED:
-        case EXPER_STAT_DROPPER_FINISHED:
-        case EXPER_STAT_AGNO3_EXTEST_FINISHED2:
-        case EXPER_STAT_BLOCK_EXTEST_FINISHED2:
-            WM_HideWindow(hItem);
-            break;
-        case EXPER_STAT_CL_FINISHED:
-        case EXPER_STAT_STAND_FINISHED:
-        case EXPER_STAT_CL_EXTEST_FINISHED2:
-            BUTTON_SetText(hItem, "返回");
-            break;
-        default:
-            break;
-        }
-        // USER START (Optionally insert additional code for further widget initialization)
-        // USER END
         break;
     case WM_NOTIFY_PARENT:
         Id = WM_GetId(pMsg->hWinSrc);
         NCode = pMsg->Data.v;
         switch (Id)
         {
-        case ID_BUTTON_0: // Notifications sent by 'Button'
+        case ID_BUTTON_PRINT: // Notifications sent by 'Button'
             switch (NCode)
             {
             case WM_NOTIFICATION_CLICKED:
                 // USER START (Optionally insert code for reacting on notification message)
-                beep_clicked();
-                switch (stat->stat) {
-                case EXPER_STAT_CL_FINISHED:
-                    ctrl_all_items(pMsg->hWin, 0);
-                    WM_Exec();
-                    exper_print_report(0);
-                    ctrl_all_items(pMsg->hWin, 1);
-                    break;
-                case EXPER_STAT_STAND_FINISHED:
-                    ctrl_all_items(pMsg->hWin, 0);
-                    WM_Exec();
-                    exper_print_report(1);
-                    ctrl_all_items(pMsg->hWin, 1);
-                    break;
-                case EXPER_STAT_CL_EXTEST_FINISHED2:
-                    ctrl_all_items(pMsg->hWin, 0);
-                    WM_Exec();
-                    exper_print_report(3);
-                    ctrl_all_items(pMsg->hWin, 1);
-                    break;
-                default:
-                    break;
-                }                
-                // USER END
-                break;
-            case WM_NOTIFICATION_RELEASED:
-                // USER START (Optionally insert code for reacting on notification message)
-                // USER END
-                break;
-                // USER START (Optionally insert additional code for further notification handling)
-                // USER END
-            }
-            break;
-        case ID_BUTTON_1: // Notifications sent by 'Button'
-            switch (NCode)
-            {
-            case WM_NOTIFICATION_CLICKED:
-                beep_clicked();
-                // USER START (Optionally insert code for reacting on notification message)
-                switch (stat->stat) {
-                case EXPER_STAT_AGNO3_FINISHED:
-                case EXPER_STAT_BLOCK_FINISHED:
-                case EXPER_STAT_DROPPER_FINISHED:
-                case EXPER_STAT_AGNO3_EXTEST_FINISHED2:
-                case EXPER_STAT_BLOCK_EXTEST_FINISHED2:
-                    GUI_EndDialog(pMsg->hWin, 0);
-                    break;
-                default:
-                    break;
-                }
-                // USER END
-                break;
-            case WM_NOTIFICATION_RELEASED:
-                // USER START (Optionally insert code for reacting on notification message)
-                // USER END
-                break;
-                // USER START (Optionally insert additional code for further notification handling)
-                // USER END
-            }
-            break;
-        case ID_BUTTON_2: // Notifications sent by 'Button'
-            switch (NCode)
-            {
-            case WM_NOTIFICATION_CLICKED:
                 beep_clicked();
                 GUI_EndDialog(pMsg->hWin, 0);
+                // USER END
+                break;
+            case WM_NOTIFICATION_RELEASED:
                 // USER START (Optionally insert code for reacting on notification message)
+                // USER END
+                break;
+                // USER START (Optionally insert additional code for further notification handling)
+                // USER END
+            }
+            break;
+        case ID_BUTTON_QUIT: // Notifications sent by 'Button'
+            switch (NCode)
+            {
+            case WM_NOTIFICATION_CLICKED:
+                // USER START (Optionally insert code for reacting on notification message)
+                beep_clicked();
+                GUI_EndDialog(pMsg->hWin, 1);
                 // USER END
                 break;
             case WM_NOTIFICATION_RELEASED:
@@ -472,9 +202,9 @@ static void _cbDialog(WM_MESSAGE *pMsg)
 *
 *       CreateWindow
 */
-int diag_res_creat(struct exper_stat *es)
+
+int diag_result_creat(void)
 {
-    stat = es;
     return GUI_ExecDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
 }
 

@@ -14,6 +14,7 @@ struct test_data {
     float volt_block2;
     float volt_blockagv;
     float volt_sample;
+    float result;
 };
 
 extern int test_init(void);

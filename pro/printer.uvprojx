@@ -478,6 +478,11 @@
               <FileType>1</FileType>
               <FilePath>..\user\ui_diag_wait.c</FilePath>
             </File>
+            <File>
+              <FileName>ui_diag_res.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\ui_diag_res.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

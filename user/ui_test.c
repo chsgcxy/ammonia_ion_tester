@@ -117,7 +117,7 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
     {EDIT_CreateIndirect, "10.000g", ID_EDIT_WEIGHT, 500, 55, 150, 30, 0, 0x0, 0},
 
     {TEXT_CreateIndirect, "滤液体积", ID_TEXT_VOLUME, 310, 105, 100, 30, 0, 0x0, 0},
-    {EDIT_CreateIndirect, "20.00ml", ID_EDIT_VOLUME, 500, 105, 150, 30, 0, 0x0, 0},
+    {EDIT_CreateIndirect, "20.00mL", ID_EDIT_VOLUME, 500, 105, 150, 30, 0, 0x0, 0},
 
     {TEXT_CreateIndirect, "空白实验1电极电位", ID_TEXT_BLOCKTEST1, 310, 155, 190, 30, 0, 0x0, 0 },
     {EDIT_CreateIndirect, "0.00mV", ID_EDIT_BLOCKTEST1, 500, 155, 150, 30, 0, 0x0, 0},
@@ -541,8 +541,25 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                     g_diag_ok.str_lin3 = NULL;
                     diag_ok_creat();
                     break;
-                case RUN_TEST:NULL
+                case RUN_TEST:
                     g_td.volt_sample = volt;
+                    g_diag_res.cnt = 7;
+                    g_diag_res.header = "分析结果";
+                    g_diag_res.items[0].item = "试样质量：";
+                    sprintf(g_diag_res.items[0].value, "%.3fg", g_td.weight_sample);
+                    g_diag_res.items[1].item = "滤液体积：";
+                    sprintf(g_diag_res.items[1].value, "%.2fmL", g_td.volume_sample);
+                    g_diag_res.items[2].item = "空白实验1电极电位：";
+                    sprintf(g_diag_res.items[2].value, "%.2fmV", g_td.volt_block1);
+                    g_diag_res.items[3].item = "空白实验2电极电位：";
+                    sprintf(g_diag_res.items[3].value, "%.2fmV", g_td.volt_block2);
+                    g_diag_res.items[4].item = "空白实验平均电极电位：";
+                    sprintf(g_diag_res.items[4].value, "%.2fmV", g_td.volt_blockagv);
+                    g_diag_res.items[5].item = "离子分析电极电位：";
+                    sprintf(g_diag_res.items[5].value, "%.2fmV", g_td.volt_sample);
+                    g_diag_res.items[6].item = "氨离子含量：";
+                    sprintf(g_diag_res.items[6].value, "%.2fmg/kg", g_td.result);
+                    diag_result_creat();
                     break;
                 default:
                     break;

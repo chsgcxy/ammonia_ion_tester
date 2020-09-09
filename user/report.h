@@ -6,6 +6,6 @@
 #include "data.h"
 
 extern int report_init(struct tprinter *printer);
-extern int report_show(struct result_data *rp);
+extern int report_show(struct test_data *rp);
 
 #endif

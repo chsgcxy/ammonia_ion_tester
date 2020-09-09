@@ -26,9 +26,10 @@
 #include "main.h"
 #include "beep.h"
 #include "data.h"
-#include "experiment.h"
 #include "usbh_usr.h"
 #include "delay.h"
+#include "ui_diag.h"
+#include "test.h"
 /*********************************************************************
 *
 *       Defines
@@ -43,13 +44,14 @@
 #define ID_BUTTON_RETURN    (GUI_ID_USER + 0x05)
 #define ID_BUTTON_EXPALL    (GUI_ID_USER + 0x06)
 #define ID_BUTTON_DELALL    (GUI_ID_USER + 0x07)
+#define ID_TEXT_HEADER      (GUI_ID_USER + 0x08)
+
 
 // USER START (Optionally insert additional defines)
 extern const GUI_FONT GUI_FontHZ_yahei_20;
 extern const GUI_FONT GUI_FontHZ_yahei_16;
 // USER END
-extern int diag_info_creat(struct ui_exper_info *info);
-extern int diag_err_creat(struct ui_exper_info *info);
+
 /*********************************************************************
 *
 *       Static data
@@ -65,18 +67,18 @@ extern int diag_err_creat(struct ui_exper_info *info);
 *       _aDialogCreate
 */
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
-    {FRAMEWIN_CreateIndirect, "Framewin", ID_FRAMEWIN_0, 0, 0, 800, 480, 0, 0x0, 0},
-    
-    {LISTBOX_CreateIndirect, "Listbox", ID_LISTBOX_0, 5, 5, 380, 415, 0, 0x0, 0},
+    {WINDOW_CreateIndirect, "Framewin", ID_FRAMEWIN_0, 0, 0, 800, 480, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "数据处理", ID_TEXT_HEADER, 300, 2, 200, 40, 0, 0x0, 0},
 
-    {BUTTON_CreateIndirect, "查看", ID_BUTTON_LOOK, 430, 30, 140, 60, 0, 0x0, 0},
-    {BUTTON_CreateIndirect, "返回", ID_BUTTON_RETURN, 640, 30, 140, 60, 0, 0x0, 0},
+    {LISTBOX_CreateIndirect, "Listbox", ID_LISTBOX_0, 5, 55, 380, 415, 0, 0x0, 0},
 
-    {BUTTON_CreateIndirect, "删除", ID_BUTTON_DEL, 430, 180, 140, 60, 0, 0x0, 0},
-    {BUTTON_CreateIndirect, "全部删除", ID_BUTTON_DELALL, 640, 180, 140, 60, 0, 0x0, 0},
-    
-    //{BUTTON_CreateIndirect, "导出", ID_BUTTON_EXP, 430, 330, 140, 60, 0, 0x0, 0},
-    {BUTTON_CreateIndirect, "导出至U盘", ID_BUTTON_EXPALL, 430, 330, 350, 60, 0, 0x0, 0},
+    {BUTTON_CreateIndirect, "查看", ID_BUTTON_LOOK, 430, 80, 140, 60, 0, 0x0, 0},
+    {BUTTON_CreateIndirect, "返回", ID_BUTTON_RETURN, 640, 80, 140, 60, 0, 0x0, 0},
+
+    {BUTTON_CreateIndirect, "删除", ID_BUTTON_DEL, 430, 230, 140, 60, 0, 0x0, 0},
+    {BUTTON_CreateIndirect, "全部删除", ID_BUTTON_DELALL, 640, 230, 140, 60, 0, 0x0, 0},
+
+    {BUTTON_CreateIndirect, "导出至U盘", ID_BUTTON_EXPALL, 430, 380, 350, 60, 0, 0x0, 0},
     // USER START (Optionally insert additional widgets)
     // USER END
 };
@@ -87,31 +89,12 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 *
 **********************************************************************
 */
-static struct lb_idx idx_table[DATA_MAX_NUM];
-static struct ui_exper_info ginfo;
-static int count = 0;
 
 // USER START (Optionally insert additional static code)
 // USER END
 
-static void ctrl_all_items(WM_HWIN hWin, int enable)
-{
-    WM_HWIN hItem;
-    int id;
-
-    for (id = ID_LISTBOX_0; id <= ID_BUTTON_DELALL; id++) {
-        hItem = WM_GetDialogItem(hWin, id);
-        if (enable)
-            WM_EnableWindow(hItem);
-        else
-            WM_DisableWindow(hItem);
-    }    
-}
-
 void uidata_usb_cmd_load(struct data_usb_cmd *cmd)
 {
-    cmd->table = idx_table;
-    cmd->len = count;
     cmd->cmd = USB_EXPORT;
 }
 /*********************************************************************
@@ -124,7 +107,7 @@ static void _cbDialog(WM_MESSAGE *pMsg)
     int NCode;
     int Id;
     int i;
-    struct data_ui *du;
+    struct desc_reorder_list *list = desc_reorder_list_get();
     // USER START (Optionally insert additional variables)
     // USER END
 
@@ -134,13 +117,10 @@ static void _cbDialog(WM_MESSAGE *pMsg)
         //
         // Initialization of 'Framewin'
         //
-        hItem = pMsg->hWin;
-        FRAMEWIN_SetTitleHeight(hItem, 50);
-        FRAMEWIN_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
-        FRAMEWIN_SetTextColor(hItem, GUI_BLUE);
-        FRAMEWIN_SetClientColor(hItem, GUI_GRAY);
-        FRAMEWIN_SetText(hItem, "数据处理");
-        FRAMEWIN_SetFont(hItem, &GUI_FontHZ_yahei_20);
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_HEADER);
+        TEXT_SetFont(hItem, &GUI_FontHZ_yahei_20);
+        TEXT_SetTextColor(hItem, GUI_DARKBLUE);
+        TEXT_SetTextAlign(hItem, GUI_TA_HCENTER);
         //
         // Initialization of 'Listbox'
         //
@@ -160,15 +140,7 @@ static void _cbDialog(WM_MESSAGE *pMsg)
         hItem = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_DELALL);
         BUTTON_SetTextColor(hItem, 0, GUI_BLUE);
         BUTTON_SetFont(hItem, &GUI_FontHZ_yahei_16);
-        //
-        // Initialization of 'Button'
-        //
-        //hItem = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_EXP);
-        //BUTTON_SetTextColor(hItem, 0, GUI_BLUE);
-        //BUTTON_SetFont(hItem, &GUI_FontHZ_yahei_16);
-        //
-        // Initialization of 'Button'
-        //
+
         hItem = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_RETURN);
         BUTTON_SetFont(hItem, &GUI_FontHZ_yahei_16);
         BUTTON_SetTextColor(hItem, 0, GUI_RED);
@@ -184,14 +156,12 @@ static void _cbDialog(WM_MESSAGE *pMsg)
         LISTBOX_SetAutoScrollV(hItem, 1);
         LISTBOX_SetScrollbarWidth(hItem, 30);
 
-        count = data_indextable_update(idx_table);
-        for (i = 0; i < count; i++) {
-            du = data_ui_get(idx_table[i].data_idx);
-            if (du) {
-                hItem = WM_GetDialogItem(pMsg->hWin, ID_LISTBOX_0);
-                LISTBOX_AddString(hItem, du->string);
-            }
+        data_reorder_list_update(list);
+        for (i = 0; i < list->cnt; i++) {
+            hItem = WM_GetDialogItem(pMsg->hWin, ID_LISTBOX_0);
+            LISTBOX_AddString(hItem, list->descs[i]->string);
         }
+
         // USER START (Optionally insert additional code for further widget initialization)
         // USER END
         break;
@@ -227,30 +197,28 @@ static void _cbDialog(WM_MESSAGE *pMsg)
                 beep_clicked();
                 hItem = WM_GetDialogItem(pMsg->hWin, ID_LISTBOX_0);
                 i = LISTBOX_GetSel(hItem);
-                if (i < count) {
-                    g_ui_msg.param0 = idx_table[i].data_idx;
+                if (i < list->cnt) {
+                    g_diag_detail.data_idx = list->descs[i]->idx;
                     g_ui_msg.msg = UI_MSG_LOAD_DETAIL;
                     GUI_EndDialog(pMsg->hWin, 0);
-                } else if (count == 0) {
-                    ctrl_all_items(pMsg->hWin, 0);
-                    WM_DisableWindow(pMsg->hWin);
+                } else if (list->cnt == 0) {
+                    test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 0);
                     WM_Exec();
-                    ginfo.func = ERROR_DATA_LOOKUP;
-                    ginfo.flag = 0;
-                    ginfo.str = "没有可查看数据";
-                    diag_err_creat(&ginfo);
-                    WM_EnableWindow(pMsg->hWin);
-                    ctrl_all_items(pMsg->hWin, 1);
+                    g_diag_ok.header = "错误";
+                    g_diag_ok.str_lin1 = "没有可查看的数据";
+                    g_diag_ok.str_lin2 = NULL;
+                    g_diag_ok.str_lin3 = NULL;
+                    diag_ok_creat();
+                    test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 1);
                 } else {
-                    ctrl_all_items(pMsg->hWin, 0);
-                    WM_DisableWindow(pMsg->hWin);
+                    test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 0);
                     WM_Exec();
-                    ginfo.func = ERROR_DATA_LOOKUP;
-                    ginfo.flag = 0;
-                    ginfo.str = "系统异常,找不到对应数据";
-                    diag_err_creat(&ginfo);
-                    WM_EnableWindow(pMsg->hWin);
-                    ctrl_all_items(pMsg->hWin, 1);
+                    g_diag_ok.header = "错误";
+                    g_diag_ok.str_lin1 = "系统异常，找不到对应数据";
+                    g_diag_ok.str_lin2 = NULL;
+                    g_diag_ok.str_lin3 = NULL;
+                    diag_ok_creat();
+                    test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 1);
                 }
                 // USER END
                 break;
@@ -269,56 +237,57 @@ static void _cbDialog(WM_MESSAGE *pMsg)
                 // USER START (Optionally insert code for reacting on notification message)
                 beep_clicked();
                 hItem = WM_GetDialogItem(pMsg->hWin, ID_LISTBOX_0);
-                
                 i = LISTBOX_GetSel(hItem);
-                if (count == 0) {
-                    ctrl_all_items(pMsg->hWin, 0);
-                    WM_DisableWindow(pMsg->hWin);
+                if (list->cnt == 0) {
+                    test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 0);
                     WM_Exec();
-                    ginfo.func = ERROR_DATA_LOOKUP;
-                    ginfo.flag = 0;
-                    ginfo.str = "没有可删除数据";
-                    diag_err_creat(&ginfo);
-                    WM_EnableWindow(pMsg->hWin);
-                    ctrl_all_items(pMsg->hWin, 1);
+                    g_diag_ok.header = "错误";
+                    g_diag_ok.str_lin1 = "没有可删除数据";
+                    g_diag_ok.str_lin2 = NULL;
+                    g_diag_ok.str_lin3 = NULL;
+                    diag_ok_creat();
+                    test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 1);
                     break;
-                } else if (i >= count) {
-                    ctrl_all_items(pMsg->hWin, 0);
-                    WM_DisableWindow(pMsg->hWin);
+                } else if (i >= list->cnt) {
+                    test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 0);
                     WM_Exec();
-                    ginfo.func = ERROR_DATA_LOOKUP;
-                    ginfo.flag = 0;
-                    ginfo.str = "系统异常,找不到对应数据";
-                    diag_err_creat(&ginfo);
-                    WM_EnableWindow(pMsg->hWin);
-                    ctrl_all_items(pMsg->hWin, 1);
+                    g_diag_ok.header = "错误";
+                    g_diag_ok.str_lin1 = "系统异常，找不到对应数据";
+                    g_diag_ok.str_lin2 = NULL;
+                    g_diag_ok.str_lin3 = NULL;
+                    diag_ok_creat();
+                    test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 1);
                     break;
                 }
 
-                du = data_ui_get(idx_table[i].data_idx);
-                if (du) {
-                    ginfo.func = DATA_MSG_DEL;
-                    ginfo.flag = 0;
-                    ginfo.str = du->string;
-                } else
+                if (!list->descs[i])
                     break;
 
-                ctrl_all_items(pMsg->hWin, 0);
-                WM_DisableWindow(pMsg->hWin);
+                test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 0);
                 WM_Exec();
-                if (diag_info_creat(&ginfo)) {
-                    ctrl_all_items(pMsg->hWin, 1);
+                g_diag_start.header = "数据删除";
+                g_diag_start.str_lin1 = "将要删除实验数据：";
+                g_diag_start.str_lin2 = list->descs[i]->string;
+                g_diag_start.str_lin3 = "删除后数据不可恢复，请谨慎操作";
+                g_diag_start.btn_str = "删除";
+                if (diag_start_creat()) {
+                    test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 1);
                     break;
                 }
-                WM_EnableWindow(pMsg->hWin);
-                ctrl_all_items(pMsg->hWin, 1);
+
                 /* I don't know why LISTBOX_DeleteItem can not work
                  * so, reload this windows to runaway this bug
                  */
-                if (data_del(idx_table[i].data_idx)) {
-                    g_ui_msg.msg = UI_MSG_LOAD_DATA;
-                    GUI_EndDialog(pMsg->hWin, 0);
-                }                    
+                if (data_delete_one(i, list->descs[i]->idx)) {
+                    test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 1);
+                    WM_Exec();
+                    hItem = WM_GetDialogItem(pMsg->hWin, ID_LISTBOX_0);
+                    LISTBOX_DeleteItem(hItem, i);
+                    //g_ui_msg.msg = UI_MSG_LOAD_DATA;
+                    //GUI_EndDialog(pMsg->hWin, 0);
+                } else {
+                    test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 1);
+                }
                 // USER END
                 break;
             case WM_NOTIFICATION_RELEASED:
@@ -336,32 +305,33 @@ static void _cbDialog(WM_MESSAGE *pMsg)
                 // USER START (Optionally insert code for reacting on notification message)
                 beep_clicked();
 
-                if (count == 0) {
-                    ctrl_all_items(pMsg->hWin, 0);
-                    WM_DisableWindow(pMsg->hWin);
+                if (list->cnt == 0) {
+                    test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 0);
                     WM_Exec();
-                    ginfo.func = ERROR_DATA_LOOKUP;
-                    ginfo.flag = 0;
-                    ginfo.str = "没有可删除数据";
-                    diag_err_creat(&ginfo);
-                    WM_EnableWindow(pMsg->hWin);
-                    ctrl_all_items(pMsg->hWin, 1);
+                    g_diag_ok.header = "错误";
+                    g_diag_ok.str_lin1 = "没有可删除数据";
+                    g_diag_ok.str_lin2 = NULL;
+                    g_diag_ok.str_lin3 = NULL;
+                    diag_ok_creat();
+                    test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 1);
                     break;
                 }
 
-                ginfo.func = DATA_MSG_DEL_ALL;
-                ginfo.flag = 0;
-                ctrl_all_items(pMsg->hWin, 0);
-                WM_DisableWindow(pMsg->hWin);
+                test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 0);
                 WM_Exec();
-                if (diag_info_creat(&ginfo)) {
-                    ctrl_all_items(pMsg->hWin, 1);
+                g_diag_start.header = "数据删除";
+                g_diag_start.str_lin1 = "将要删除所有实验数据";
+                g_diag_start.str_lin2 = "删除后数据不可恢复，请谨慎操作";
+                g_diag_start.str_lin3 = NULL;
+                g_diag_start.btn_str = "删除";
+                if (diag_start_creat()) {
+                    test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 1);
                     break;
                 }
-                WM_EnableWindow(pMsg->hWin);
-                ctrl_all_items(pMsg->hWin, 1);
+
+                test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 1);
                 
-                data_delall();
+                data_delete_all();
                 
                 /* I don't know why LISTBOX_DeleteItem can not work
                  * so, reload this windows to runaway this bug
@@ -384,27 +354,21 @@ static void _cbDialog(WM_MESSAGE *pMsg)
             case WM_NOTIFICATION_CLICKED:
                 // USER START (Optionally insert code for reacting on notification message)
                 beep_clicked();
-
-                ctrl_all_items(pMsg->hWin, 0);
-                WM_DisableWindow(pMsg->hWin);
+                test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 0);
                 WM_Exec();
 
-                if (count <= 0) {
-                    ginfo.func = INFO_DATA_EXPORT;
-                    ginfo.flag = 0;
-                    ginfo.str = "没有可导出数据";
-                    diag_err_creat(&ginfo);
-                    WM_EnableWindow(pMsg->hWin);
-                    ctrl_all_items(pMsg->hWin, 1);
+                if (list->cnt <= 0) {
+                    g_diag_ok.header = "错误";
+                    g_diag_ok.str_lin1 = "没有可导出数据";
+                    g_diag_ok.str_lin2 = NULL;
+                    g_diag_ok.str_lin3 = NULL;
+                    diag_ok_creat();
+                    test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 1);
                     break;
                 }
 
-                ginfo.func = INFO_DATA_EXPROTING;
-                ginfo.flag = 0;
-                ginfo.str = "正在检测U盘......";
-                diag_err_creat(&ginfo);
-                WM_EnableWindow(pMsg->hWin);
-                ctrl_all_items(pMsg->hWin, 1);
+                diag_usb_creat();
+                test_enable_all_items(pMsg->hWin, ID_LISTBOX_0, ID_BUTTON_DELALL, 1);
                 break;
             case WM_NOTIFICATION_RELEASED:
                 // USER START (Optionally insert code for reacting on notification message)

@@ -37,6 +37,8 @@ extern int main_menu_creat(void);
 extern int ui_check_creat(void);
 extern int ui_test_creat(void);
 extern int ui_setting_creat(void);
+extern int ui_data_creat(void);
+extern int ui_detail_creat(void);
 
 extern void lcd_io_init(void);
 
@@ -78,10 +80,10 @@ static void task_ui(void *args)
 			ui_setting_creat();
 			break;
 		case UI_MSG_LOAD_DATA:
-			//ui_data_creat();
+			ui_data_creat();
 			break;
 		case UI_MSG_LOAD_DETAIL:
-			//data_detail_creat(g_ui_msg.param0);
+			ui_detail_creat();
 			break;
 		case UI_MSG_LOAD_TOUCH_CALC:
 			vTaskSuspend(handle_touch);

@@ -16,7 +16,6 @@ struct ui_msg {
 #define UI_MSG_LOAD_DETAIL       0x06
 #define UI_MSG_LOAD_TOUCH_CALC   0x07
     int msg;
-    int param0;
 };
 
 extern struct ui_msg g_ui_msg;

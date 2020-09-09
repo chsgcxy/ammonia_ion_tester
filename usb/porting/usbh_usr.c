@@ -340,6 +340,8 @@ void USBH_USR_OverCurrentDetected(void)
 
 int USBH_USR_MSC_Application(void)
 {
+    struct desc_reorder_list *list;
+
     switch (usb_cmd.cmd) {
     case USB_INVALID:
         f_mount(USB, &fatfs);
@@ -360,7 +362,7 @@ int USBH_USR_MSC_Application(void)
             break;
         }
         
-        if (data_mkdir())
+        if (data_file_mkdir())
             usb_cmd.cmd = USB_ERROR;
         else
             usb_cmd.cmd = USB_READY;
@@ -377,8 +379,8 @@ int USBH_USR_MSC_Application(void)
             usb_cmd.cmd = USB_INVALID;
             break;
         }
-        
-        data_export(usb_cmd.table, usb_cmd.len);
+        list = desc_reorder_list_get();
+        data_file_export(list);
         usb_cmd.cmd = USB_READY;
         break;
     case USB_ERROR:
@@ -395,9 +397,9 @@ int USBH_USR_MSC_Application(void)
 }
 
 
-int usb_cmd_set(struct data_usb_cmd *cmd)
+int usb_cmd_set(int cmd)
 {
-    memcpy(&usb_cmd, cmd, sizeof(struct data_usb_cmd));
+    usb_cmd.cmd = cmd;
     return 0;
 }
 

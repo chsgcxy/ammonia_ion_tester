@@ -35,23 +35,24 @@
 *
 **********************************************************************
 */
-#define ID_FRAMEWIN_0 (GUI_ID_USER + 0x00)
-#define ID_BUTTON_0 (GUI_ID_USER + 0x01)
-#define ID_BUTTON_1 (GUI_ID_USER + 0x02)
-#define ID_SPINBOX_0 (GUI_ID_USER + 0x04)
-#define ID_TEXT_0 (GUI_ID_USER + 0x05)
-#define ID_SPINBOX_1 (GUI_ID_USER + 0x06)
-#define ID_TEXT_1 (GUI_ID_USER + 0x07)
-#define ID_SPINBOX_2 (GUI_ID_USER + 0x08)
-#define ID_TEXT_2 (GUI_ID_USER + 0x09)
-#define ID_SPINBOX_3 (GUI_ID_USER + 0x0A)
-#define ID_SPINBOX_4 (GUI_ID_USER + 0x0B)
-#define ID_TEXT_3 (GUI_ID_USER + 0x0C)
-#define ID_TEXT_4 (GUI_ID_USER + 0x0D)
-#define ID_SPINBOX_5 (GUI_ID_USER + 0x0F)
-#define ID_TEXT_5 (GUI_ID_USER + 0x10)
-#define ID_TEXT_6 (GUI_ID_USER + 0x11)
-#define ID_BUTTON_3 (GUI_ID_USER + 0x12)
+#define ID_FRAMEWIN_0    (GUI_ID_USER + 0x00)
+#define ID_BUTTON_0      (GUI_ID_USER + 0x01)
+#define ID_BUTTON_1      (GUI_ID_USER + 0x02)
+#define ID_SPINBOX_0     (GUI_ID_USER + 0x04)
+#define ID_TEXT_0        (GUI_ID_USER + 0x05)
+#define ID_SPINBOX_1     (GUI_ID_USER + 0x06)
+#define ID_TEXT_1        (GUI_ID_USER + 0x07)
+#define ID_SPINBOX_2     (GUI_ID_USER + 0x08)
+#define ID_TEXT_2        (GUI_ID_USER + 0x09)
+#define ID_SPINBOX_3     (GUI_ID_USER + 0x0A)
+#define ID_SPINBOX_4     (GUI_ID_USER + 0x0B)
+#define ID_TEXT_3        (GUI_ID_USER + 0x0C)
+#define ID_TEXT_4        (GUI_ID_USER + 0x0D)
+#define ID_SPINBOX_5     (GUI_ID_USER + 0x0F)
+#define ID_TEXT_5        (GUI_ID_USER + 0x10)
+#define ID_TEXT_6        (GUI_ID_USER + 0x11)
+#define ID_BUTTON_3      (GUI_ID_USER + 0x12)
+#define ID_TEXT_HEADER   (GUI_ID_USER + 0x13)
 
 // USER START (Optionally insert additional defines)
 extern const GUI_FONT GUI_FontHZ_yahei_16;
@@ -73,23 +74,24 @@ extern const GUI_FONT GUI_FontHZ_yahei_20;
 *       _aDialogCreate
 */
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
-    {FRAMEWIN_CreateIndirect, "Framewin", ID_FRAMEWIN_0, 0, 0, 800, 480, 0, 0x0, 0},
+    {WINDOW_CreateIndirect, "Framewin", ID_FRAMEWIN_0, 0, 0, 800, 480, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "系统设置", ID_TEXT_HEADER, 300, 2, 200, 40, 0, 0x0, 0},
     
-    {BUTTON_CreateIndirect, "触摸屏校准", ID_BUTTON_0, 10, 10, 770, 140, 0, 0x0, 0},
+    {BUTTON_CreateIndirect, "触摸屏校准", ID_BUTTON_0, 10, 50, 770, 140, 0, 0x0, 0},
 
-    {SPINBOX_CreateIndirect, "Spinbox", ID_SPINBOX_0, 10, 230, 110, 70, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "年", ID_TEXT_0, 123, 250, 25, 35, 0, 0x64, 0},
-    {SPINBOX_CreateIndirect, "Spinbox", ID_SPINBOX_1, 150, 230, 110, 70, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "月", ID_TEXT_1, 263, 250, 25, 35, 0, 0x64, 0},
-    {SPINBOX_CreateIndirect, "Spinbox", ID_SPINBOX_2, 290, 230, 110, 70, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "日", ID_TEXT_2, 403, 250, 25, 35, 0, 0x64, 0},
-    {SPINBOX_CreateIndirect, "Spinbox", ID_SPINBOX_3, 430, 230, 110, 70, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "时", ID_TEXT_3, 543, 250, 25, 35, 0, 0x64, 0},
-    {SPINBOX_CreateIndirect, "Spinbox", ID_SPINBOX_4, 570, 230, 110, 70, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "分", ID_TEXT_4, 683, 250, 25, 35, 0, 0x64, 0},
-    {BUTTON_CreateIndirect, "保存", ID_BUTTON_1, 710, 230, 80, 70, 0, 0x0, 0},
+    {SPINBOX_CreateIndirect, "Spinbox", ID_SPINBOX_0, 10, 280, 110, 70, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "年", ID_TEXT_0, 123, 300, 25, 35, 0, 0x64, 0},
+    {SPINBOX_CreateIndirect, "Spinbox", ID_SPINBOX_1, 150, 280, 110, 70, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "月", ID_TEXT_1, 263, 300, 25, 35, 0, 0x64, 0},
+    {SPINBOX_CreateIndirect, "Spinbox", ID_SPINBOX_2, 290, 280, 110, 70, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "日", ID_TEXT_2, 403, 300, 25, 35, 0, 0x64, 0},
+    {SPINBOX_CreateIndirect, "Spinbox", ID_SPINBOX_3, 430, 280, 110, 70, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "时", ID_TEXT_3, 543, 300, 25, 35, 0, 0x64, 0},
+    {SPINBOX_CreateIndirect, "Spinbox", ID_SPINBOX_4, 570, 280, 110, 70, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "分", ID_TEXT_4, 683, 300, 25, 35, 0, 0x64, 0},
+    {BUTTON_CreateIndirect, "保存", ID_BUTTON_1, 710, 280, 80, 70, 0, 0x0, 0},
     
-    {BUTTON_CreateIndirect, "返回", ID_BUTTON_3, 638, 370, 146, 50, 0, 0x0, 0},
+    {BUTTON_CreateIndirect, "返回", ID_BUTTON_3, 638, 420, 146, 50, 0, 0x0, 0},
     // USER START (Optionally insert additional widgets)
     // USER END
 };
@@ -137,13 +139,10 @@ static void _cbDialog(WM_MESSAGE *pMsg)
         //
         // Initialization of 'Framewin'
         //
-        hItem = pMsg->hWin;
-        FRAMEWIN_SetTitleHeight(hItem, 50);
-        FRAMEWIN_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
-        FRAMEWIN_SetFont(hItem, &GUI_FontHZ_yahei_20);
-        FRAMEWIN_SetTextColor(hItem, GUI_BLACK_33);
-        FRAMEWIN_SetClientColor(hItem, GUI_WHITE);
-        FRAMEWIN_SetText(hItem, "系统设置");
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_HEADER);
+        TEXT_SetFont(hItem, &GUI_FontHZ_yahei_20);
+        TEXT_SetTextColor(hItem, GUI_DARKBLUE);
+        TEXT_SetTextAlign(hItem, GUI_TA_HCENTER);
         //
         // Initialization of 'Button'
         //

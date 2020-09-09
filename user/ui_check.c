@@ -278,6 +278,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 g_diag_start.str_lin1 = "取10mL 0.1mg/mL氨离子标准溶液至100mL";
                 g_diag_start.str_lin2 = "容量瓶中，稀释至刻度，并启动磁力搅拌器";
                 g_diag_start.str_lin3 = "准备好后，点击开始实验以启动检测";
+                g_diag_start.btn_str = "开始实验";
                 result = diag_start_creat();
                 if (result)
                     test_enable_all_items(pMsg->hWin, ID_TEXT_GUIDE0, ID_TEXT_HEADER, 1);
@@ -308,6 +309,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 g_diag_start.str_lin1 = "取10mL 0.01mg/mL氨离子标准溶液至100mL";
                 g_diag_start.str_lin2 = "容量瓶中，稀释至刻度，并启动磁力搅拌器";
                 g_diag_start.str_lin3 = "准备好后,点击开始实验以启动检测";
+                g_diag_start.btn_str = "开始实验";
                 result = diag_start_creat();
                 if (result)
                     test_enable_all_items(pMsg->hWin, ID_TEXT_GUIDE0, ID_TEXT_HEADER, 1);
@@ -338,6 +340,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 g_diag_start.str_lin1 = "取10mL 0.001mg/mL氨离子标准溶液至100mL";
                 g_diag_start.str_lin2 = "容量瓶中，稀释至刻度，并启动磁力搅拌器";
                 g_diag_start.str_lin3 = "准备好后,点击开始实验以启动检测";
+                g_diag_start.btn_str = "开始实验";
                 result = diag_start_creat();
                 if (result)
                     test_enable_all_items(pMsg->hWin, ID_TEXT_GUIDE0, ID_TEXT_HEADER, 1);

@@ -483,6 +483,21 @@
               <FileType>1</FileType>
               <FilePath>..\user\ui_diag_res.c</FilePath>
             </File>
+            <File>
+              <FileName>ui_diag_usb.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\ui_diag_usb.c</FilePath>
+            </File>
+            <File>
+              <FileName>ui_data.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\ui_data.c</FilePath>
+            </File>
+            <File>
+              <FileName>ui_detail.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\ui_detail.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -54,21 +54,24 @@
 #define ID_TEXT_VOLUME_VALUE   (GUI_ID_USER + 0x0a)
 
 #define ID_TEXT_BLOCK1         (GUI_ID_USER + 0x0b)
-#define ID_TEXT_BLOCK1_VOLT    (GUI_ID_USER + 0x0c)
+#define ID_TEXT_BLOCK1_CONCENT    (GUI_ID_USER + 0x0c)
 
 #define ID_TEXT_BLOCK2         (GUI_ID_USER + 0x0d)
-#define ID_TEXT_BLOCK2_VOLT    (GUI_ID_USER + 0x1e)
+#define ID_TEXT_BLOCK2_CONCENT    (GUI_ID_USER + 0x1e)
 
 #define ID_TEXT_BLOCK_AVG      (GUI_ID_USER + 0x0f)
-#define ID_TEXT_BLOCK_AVG_VOLT (GUI_ID_USER + 0x10)
+#define ID_TEXT_BLOCK_AVG_CONCENT (GUI_ID_USER + 0x10)
 
 #define ID_TEXT_SAMPLE         (GUI_ID_USER + 0x11)
-#define ID_TEXT_SAMPLE_VOLT    (GUI_ID_USER + 0x12)
+#define ID_TEXT_SAMPLE_CONCENT    (GUI_ID_USER + 0x12)
 
 #define ID_TEXT_RESULT         (GUI_ID_USER + 0x13)
 #define ID_TEXT_RESULT_VALUE   (GUI_ID_USER + 0x14)
 
 #define ID_TEXT_HEADER         (GUI_ID_USER + 0x15)
+
+#define ID_TEXT_ELECT        (GUI_ID_USER + 0x16)
+#define ID_TEXT_ELECT_STAT   (GUI_ID_USER + 0x17)
 
 // USER START (Optionally insert additional defines)
 extern const GUI_FONT GUI_FontHZ_yahei_20;
@@ -94,37 +97,40 @@ static struct test_data data;
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
     {WINDOW_CreateIndirect, "Window", ID_WINDOW_0, 0, 0, 800, 480, 0, 0x0, 0},
 
-    {TEXT_CreateIndirect, "数据处理", ID_TEXT_HEADER, 300, 2, 200, 40, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "数据查看", ID_TEXT_HEADER, 300, 2, 200, 40, 0, 0x0, 0},
 
-    {TEXT_CreateIndirect, "序号：", ID_TEXT_IDX, 10, 60, 40, 25, 0, 0x64, 0},
-    {TEXT_CreateIndirect, "0", ID_TEXT_IDX_VALUE, 60, 60, 40, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "数据编号：", ID_TEXT_IDX, 100, 60, 200, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "0", ID_TEXT_IDX_VALUE, 370, 60, 40, 25, 0, 0x64, 0},
 
-    {TEXT_CreateIndirect, "时间：", ID_TEXT_DATE, 10, 90, 40, 25, 0, 0x64, 0},
-    {TEXT_CreateIndirect, "0", ID_TEXT_DATE_VALUE, 60, 90, 200, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "生成时间：", ID_TEXT_DATE, 100, 90, 200, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "0", ID_TEXT_DATE_VALUE, 370, 90, 200, 25, 0, 0x64, 0},
 
-    {TEXT_CreateIndirect, "试样质量：", ID_TEXT_WEIGHT, 10, 120, 80, 25, 0, 0x64, 0},
-    {TEXT_CreateIndirect, "0", ID_TEXT_WEIGHT_VALUE, 100, 120, 200, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "电极状态：", ID_TEXT_ELECT, 100, 120, 200, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "0", ID_TEXT_ELECT_STAT, 370, 120, 200, 25, 0, 0x64, 0},
 
-    {TEXT_CreateIndirect, "滤液体积：", ID_TEXT_VOLUME, 10, 150, 80, 25, 0, 0x64, 0},
-    {TEXT_CreateIndirect, "0", ID_TEXT_VOLUME_VALUE, 100, 150, 200, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "试样质量：", ID_TEXT_WEIGHT, 100, 150, 200, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "0", ID_TEXT_WEIGHT_VALUE, 370, 150, 200, 25, 0, 0x64, 0},
 
-    {TEXT_CreateIndirect, "空白实验1电极电位：", ID_TEXT_BLOCK1, 10, 180, 200, 25, 0, 0x64, 0},
-    {TEXT_CreateIndirect, "0", ID_TEXT_BLOCK1_VOLT, 220, 180, 200, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "滤液体积：", ID_TEXT_VOLUME, 100, 180, 200, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "0", ID_TEXT_VOLUME_VALUE, 370, 180, 200, 25, 0, 0x64, 0},
 
-    {TEXT_CreateIndirect, "空白实验2电极电位：", ID_TEXT_BLOCK2, 10, 210, 200, 25, 0, 0x64, 0},
-    {TEXT_CreateIndirect, "0", ID_TEXT_BLOCK2_VOLT, 220, 210, 200, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "空白实验1溶液浓度：", ID_TEXT_BLOCK1, 100, 210, 250, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "0", ID_TEXT_BLOCK1_CONCENT, 370, 210, 200, 25, 0, 0x64, 0},
 
-    {TEXT_CreateIndirect, "空白实验平均电极电位：", ID_TEXT_BLOCK_AVG, 10, 240, 200, 25, 0, 0x64, 0},
-    {TEXT_CreateIndirect, "0", ID_TEXT_BLOCK_AVG_VOLT, 220, 240, 200, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "空白实验2溶液浓度：", ID_TEXT_BLOCK2, 100, 240, 250, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "0", ID_TEXT_BLOCK2_CONCENT, 370, 240, 200, 25, 0, 0x64, 0},
 
-    {TEXT_CreateIndirect, "试样电极电位：", ID_TEXT_SAMPLE, 10, 270, 200, 25, 0, 0x64, 0},
-    {TEXT_CreateIndirect, "0", ID_TEXT_SAMPLE_VOLT, 220, 270, 200, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "空白实验平均溶液浓度：", ID_TEXT_BLOCK_AVG, 100, 270, 250, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "0", ID_TEXT_BLOCK_AVG_CONCENT, 370, 270, 200, 25, 0, 0x64, 0},
 
-    {TEXT_CreateIndirect, "氨离子含量：", ID_TEXT_RESULT, 10, 320, 200, 25, 0, 0x64, 0},
-    {TEXT_CreateIndirect, "0", ID_TEXT_RESULT_VALUE, 220, 320, 200, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "试样溶液浓度：", ID_TEXT_SAMPLE, 100, 300, 250, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "0", ID_TEXT_SAMPLE_CONCENT, 370, 300, 200, 25, 0, 0x64, 0},
+
+    {TEXT_CreateIndirect, "氨离子含量：", ID_TEXT_RESULT, 100, 350, 250, 25, 0, 0x64, 0},
+    {TEXT_CreateIndirect, "0", ID_TEXT_RESULT_VALUE, 370, 350, 200, 25, 0, 0x64, 0},
 
     {BUTTON_CreateIndirect, "打印", ID_BUTTON_PRINT, 610, 420, 180, 50, 0, 0x0, 0},
-    {BUTTON_CreateIndirect, "返回", ID_BUTTON_RETURN, 640, 80, 140, 60, 0, 0x0, 0},
+    {BUTTON_CreateIndirect, "返回", ID_BUTTON_RETURN, 650, 5, 100, 40, 0, 0x0, 0},
 };
 
 /*********************************************************************
@@ -171,6 +177,10 @@ static void _cbDialog(WM_MESSAGE *pMsg)
         TEXT_SetFont(hItem, &GUI_FontHZ_yahei_16);
         TEXT_SetTextColor(hItem, GUI_BLACK);
 
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_ELECT);
+        TEXT_SetFont(hItem, &GUI_FontHZ_yahei_16);
+        TEXT_SetTextColor(hItem, GUI_BLACK);
+
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_WEIGHT);
         TEXT_SetFont(hItem, &GUI_FontHZ_yahei_16);
         TEXT_SetTextColor(hItem, GUI_BLACK);
@@ -213,7 +223,7 @@ static void _cbDialog(WM_MESSAGE *pMsg)
 
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_DATE_VALUE);
         TEXT_SetFont(hItem, GUI_FONT_24_ASCII);
-        TEXT_SetTextColor(hItem, GUI_BLACK);
+        TEXT_SetTextColor(hItem, GUI_BLUE);
         sprintf(buf, "20%02d-%02d-%02d      %02d:%02d",
             data.year, data.month, data.day,
             data.hour, data.minute);
@@ -221,49 +231,62 @@ static void _cbDialog(WM_MESSAGE *pMsg)
 
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_IDX_VALUE);
         TEXT_SetFont(hItem, GUI_FONT_24_ASCII);
-        TEXT_SetTextColor(hItem, GUI_BLACK);
+        TEXT_SetTextColor(hItem, GUI_BLUE);
         sprintf(buf, "%03d", data.index);
         TEXT_SetText(hItem, buf);
 
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_ELECT_STAT);
+        TEXT_SetFont(hItem, &GUI_FontHZ_yahei_16);
+        switch (data.elect_stat) {
+        case CHECK_PASS:
+            TEXT_SetTextColor(hItem, GUI_GREEN);
+            TEXT_SetText(hItem, "正常");
+            break;
+        default:
+            TEXT_SetTextColor(hItem, GUI_RED);
+            TEXT_SetText(hItem, "异常");
+            break;
+        }
+
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_WEIGHT_VALUE);
         TEXT_SetFont(hItem, GUI_FONT_24_ASCII);
-        TEXT_SetTextColor(hItem, GUI_BLACK);
+        TEXT_SetTextColor(hItem, GUI_BLUE);
         sprintf(buf, "%.3fg", data.weight_sample);
         TEXT_SetText(hItem, buf);
 
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLUME_VALUE);
         TEXT_SetFont(hItem, GUI_FONT_24_ASCII);
-        TEXT_SetTextColor(hItem, GUI_BLACK);
+        TEXT_SetTextColor(hItem, GUI_BLUE);
         sprintf(buf, "%.2fmL", data.volume_sample);
         TEXT_SetText(hItem, buf);
 
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_BLOCK1_VOLT);
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_BLOCK1_CONCENT);
         TEXT_SetFont(hItem, GUI_FONT_24_ASCII);
-        TEXT_SetTextColor(hItem, GUI_BLACK);
-        sprintf(buf, "%.2fmV", data.volt_block1);
+        TEXT_SetTextColor(hItem, GUI_BLUE);
+        sprintf(buf, TEST_CONCENT_FMT, data.concent_block1);
         TEXT_SetText(hItem, buf);
 
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_BLOCK2_VOLT);
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_BLOCK2_CONCENT);
         TEXT_SetFont(hItem, GUI_FONT_24_ASCII);
-        TEXT_SetTextColor(hItem, GUI_BLACK);
-        sprintf(buf, "%.2fmV", data.volt_block2);
+        TEXT_SetTextColor(hItem, GUI_BLUE);
+        sprintf(buf, TEST_CONCENT_FMT, data.concent_block2);
         TEXT_SetText(hItem, buf);
 
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_BLOCK_AVG_VOLT);
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_BLOCK_AVG_CONCENT);
         TEXT_SetFont(hItem, GUI_FONT_24_ASCII);
-        TEXT_SetTextColor(hItem, GUI_BLACK);
-        sprintf(buf, "%.2fmV", data.volt_blockagv);
+        TEXT_SetTextColor(hItem, GUI_BLUE);
+        sprintf(buf, TEST_CONCENT_FMT, data.concent_blockave);
         TEXT_SetText(hItem, buf);
 
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_SAMPLE_VOLT);
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_SAMPLE_CONCENT);
         TEXT_SetFont(hItem, GUI_FONT_24_ASCII);
-        TEXT_SetTextColor(hItem, GUI_BLACK);
-        sprintf(buf, "%.2fmV", data.volt_sample);
+        TEXT_SetTextColor(hItem, GUI_BLUE);
+        sprintf(buf, TEST_CONCENT_FMT, data.concent_sample);
         TEXT_SetText(hItem, buf);
 
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_RESULT_VALUE);
         TEXT_SetFont(hItem, GUI_FONT_24_ASCII);
-        TEXT_SetTextColor(hItem, GUI_BLACK);
+        TEXT_SetTextColor(hItem, GUI_RED);
         sprintf(buf, "%.2fmg/kg", data.result);
         TEXT_SetText(hItem, buf);
         break;

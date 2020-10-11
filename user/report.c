@@ -16,7 +16,8 @@
 #define STRING_SAMPLE_WEIGHT    "试样质量:"
 #define STRING_INDEX            "实验编号:"
 #define STRING_TITLE            "氨离子检测报告"
-
+#define STRING_ECECT_PASS       "电极状态: 正常"
+#define STRING_ECECT_FAIL       "电极状态: 异常"
 
 uint8_t char_space = 0x20;
 uint8_t char_colon = 0x3A;
@@ -51,22 +52,22 @@ int report_show(struct test_data *td)
     tprinter_newline(report_printer);
 
     tprinter_send(report_printer, STRING_SAMPLE_VOLT, sizeof(STRING_SAMPLE_VOLT));
-    sprintf(buf, "%.2fmV", td->volt_sample);
+    sprintf(buf, "%.2fmV", td->concent_sample);
     tprinter_send(report_printer, (uint8_t *)buf, strlen(buf));
     tprinter_newline(report_printer);
 
     tprinter_send(report_printer, STRING_BLOCKAVG_VOLT, sizeof(STRING_BLOCKAVG_VOLT));
-    sprintf(buf, "%.2fmV", td->volt_blockagv);
+    sprintf(buf, "%.2fmV", td->concent_blockave);
     tprinter_send(report_printer, (uint8_t *)buf, strlen(buf));
     tprinter_newline(report_printer);
 
     tprinter_send(report_printer, STRING_BLOCK2_VOLT, sizeof(STRING_BLOCK2_VOLT));
-    sprintf(buf, "%.2fmV", td->volt_block2);
+    sprintf(buf, "%.2fmV", td->concent_block2);
     tprinter_send(report_printer, (uint8_t *)buf, strlen(buf));
     tprinter_newline(report_printer);
 
     tprinter_send(report_printer, STRING_BLOCK1_VOLT, sizeof(STRING_BLOCK1_VOLT));
-    sprintf(buf, "%.2fmV", td->volt_block1);
+    sprintf(buf, "%.2fmV", td->concent_block1);
     tprinter_send(report_printer, (uint8_t *)buf, strlen(buf));
     tprinter_newline(report_printer);
 
@@ -78,6 +79,18 @@ int report_show(struct test_data *td)
     tprinter_send(report_printer, STRING_SAMPLE_WEIGHT, sizeof(STRING_SAMPLE_WEIGHT));
     sprintf(buf, "%.3fg", td->weight_sample);
     tprinter_send(report_printer, (uint8_t *)buf, strlen(buf));
+    tprinter_newline(report_printer);
+
+    switch (td->elect_stat) {
+    case CHECK_PASS:
+        tprinter_send(report_printer, STRING_ECECT_PASS, sizeof(STRING_ECECT_PASS));
+        break;
+    case CHECK_UNDO:
+    case CHECK_FAIL:
+    default:
+        tprinter_send(report_printer, STRING_ECECT_FAIL, sizeof(STRING_ECECT_FAIL));
+        break;
+    }
     tprinter_newline(report_printer);
 
     tprinter_send(report_printer, STRING_INDEX, sizeof(STRING_INDEX));

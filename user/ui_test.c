@@ -53,17 +53,17 @@
 #define ID_TEXT_BLOCKTEST2  (GUI_ID_USER + 0x08)
 #define ID_EDIT_BLOCKTEST2  (GUI_ID_USER + 0x09)
 
-#define ID_TEXT_VOLT_INFO   (GUI_ID_USER + 0x0A)
-#define ID_TEXT_VOLT_VALUE  (GUI_ID_USER + 0x0B)
+#define ID_TEXT_SCALE_NAME_X   (GUI_ID_USER + 0x0A)
+#define ID_TEXT_SCALE_NAME_Y  (GUI_ID_USER + 0x0B)
 
 #define ID_TEXT_PROGRESS    (GUI_ID_USER + 0x0C)
 #define ID_PROGBAR_0        (GUI_ID_USER + 0x0D)
 
-#define ID_TEXT_BLOCKTEST_VOLT_INFO      (GUI_ID_USER + 0x0E)
-#define ID_TEXT_BLOCKTEST_VOLT_VALUE     (GUI_ID_USER + 0x0F)
+#define ID_TEXT_BLOCKTEST_CONCENT_INFO      (GUI_ID_USER + 0x0E)
+#define ID_TEXT_BLOCKTEST_CONCENT_VALUE     (GUI_ID_USER + 0x0F)
 
-#define ID_TEXT_TEST_VOLT_INFO           (GUI_ID_USER + 0x10)
-#define ID_TEXT_TEST_VOLT_VALUE          (GUI_ID_USER + 0x11)
+#define ID_TEXT_TEST_CONCENT_INFO           (GUI_ID_USER + 0x10)
+#define ID_TEXT_TEST_CONCENT_VALUE          (GUI_ID_USER + 0x11)
 
 
 #define ID_BUTTON_BLOCKTEST1    (GUI_ID_USER + 0x12)
@@ -73,6 +73,30 @@
 #define ID_BUTTON_RETURN        (GUI_ID_USER + 0x15)
 
 #define ID_TEXT_HEADER          (GUI_ID_USER + 0x16)
+
+#define CHECK_ELECT_STATUS {\
+    switch (td->elect_stat) { \
+    case CHECK_UNDO: \
+        g_diag_ok.header = "提示"; \
+        g_diag_ok.str_lin1 = "未进行电极校对，无法进行实验。"; \
+        g_diag_ok.str_lin2 = "请返回主菜单，进入[电极校对]功能完成电极校对"; \
+        g_diag_ok.str_lin3 = NULL; \
+        diag_ok_creat(); \
+        test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1); \
+        return; \
+    case CHECK_FAIL: \
+        g_diag_ok.header = "警告"; \
+        g_diag_ok.str_lin1 = "电极校对失败，实验结果不可信"; \
+        g_diag_ok.str_lin2 = "实验仍可进行，但结果没有参考价值"; \
+        g_diag_ok.str_lin3 = "建议更换电极后，进入[电极校对]功能完成电极校对"; \
+        diag_ok_creat(); \
+        break; \
+    case CHECK_PASS: \
+    default: \
+        break; \
+    } \
+}
+
 
 enum run_flags{
     RUN_IDLE = 0x0,
@@ -92,7 +116,7 @@ extern const GUI_FONT GUI_FontHZ_yahei_16;
 // USER END
 
 static GRAPH_SCALE_Handle hScaleV, hScaleH;
-static GRAPH_DATA_Handle pdataGRP;
+static GRAPH_DATA_Handle curve_data;
 static WM_HWIN wait_diag_handle;
 static char strbuf[32];
 struct test_ctrl tctrl;
@@ -108,35 +132,35 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
     {WINDOW_CreateIndirect, "Framewin", ID_FRAMEWIN_0, 0, 0, 800, 480, 0, 0x0, 0 },
     {TEXT_CreateIndirect, "离子分析", ID_TEXT_HEADER, 300, 2, 200, 40, 0, 0x0, 0},
 
-    {GRAPH_CreateIndirect, "Graph", ID_GRAPH_0, 2, 52, 300, 385, 0, 0x0, 0 },
+    {GRAPH_CreateIndirect, "Graph", ID_GRAPH_0, 2, 52, 350, 385, 0, 0x0, 0 },
 
-    {TEXT_CreateIndirect, "实时电位:", ID_TEXT_VOLT_INFO, 5, 442, 100, 30, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "00.00mV", ID_TEXT_VOLT_VALUE, 120, 445, 100, 30, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "mV", ID_TEXT_SCALE_NAME_X, 300, 442, 50, 30, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "mg/L", ID_TEXT_SCALE_NAME_Y, 2, 25, 100, 30, 0, 0x0, 0},
 
-    {TEXT_CreateIndirect, "试样质量", ID_TEXT_WEIGHT, 310, 55, 100, 30, 0, 0x0, 0},
-    {EDIT_CreateIndirect, "10.000g", ID_EDIT_WEIGHT, 500, 55, 150, 30, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "试样质量", ID_TEXT_WEIGHT, 360, 75, 100, 30, 0, 0x0, 0},
+    {EDIT_CreateIndirect, "10.000g", ID_EDIT_WEIGHT, 550, 75, 180, 30, 0, 0x0, 0},
 
-    {TEXT_CreateIndirect, "滤液体积", ID_TEXT_VOLUME, 310, 105, 100, 30, 0, 0x0, 0},
-    {EDIT_CreateIndirect, "20.00mL", ID_EDIT_VOLUME, 500, 105, 150, 30, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "滤液体积", ID_TEXT_VOLUME, 360, 125, 100, 30, 0, 0x0, 0},
+    {EDIT_CreateIndirect, "20.00mL", ID_EDIT_VOLUME, 550, 125, 180, 30, 0, 0x0, 0},
 
-    {TEXT_CreateIndirect, "空白实验1电极电位", ID_TEXT_BLOCKTEST1, 310, 155, 190, 30, 0, 0x0, 0 },
-    {EDIT_CreateIndirect, "0.00mV", ID_EDIT_BLOCKTEST1, 500, 155, 150, 30, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "空白实验1溶液浓度", ID_TEXT_BLOCKTEST1, 360, 175, 190, 30, 0, 0x0, 0 },
+    {EDIT_CreateIndirect, "0.0000mg/L", ID_EDIT_BLOCKTEST1, 550, 175, 180, 30, 0, 0x0, 0},
 
-    {TEXT_CreateIndirect, "空白实验2电极电位", ID_TEXT_BLOCKTEST2, 310, 205, 190, 30, 0, 0x0, 0 },
-    {EDIT_CreateIndirect, "0.00mV", ID_EDIT_BLOCKTEST2, 500, 205, 150, 30, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "空白实验2溶液浓度", ID_TEXT_BLOCKTEST2, 360, 225, 190, 30, 0, 0x0, 0 },
+    {EDIT_CreateIndirect, "0.0000mg/L", ID_EDIT_BLOCKTEST2, 550, 225, 180, 30, 0, 0x0, 0},
     
-    {TEXT_CreateIndirect, "空白实验平均电极电位:", ID_TEXT_BLOCKTEST_VOLT_INFO, 310, 270, 220, 30, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "00.00mV", ID_TEXT_BLOCKTEST_VOLT_VALUE, 555, 270, 100, 30, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "空白实验平均溶液浓度:", ID_TEXT_BLOCKTEST_CONCENT_INFO, 360, 270, 220, 30, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "0.0000mg/L", ID_TEXT_BLOCKTEST_CONCENT_VALUE, 605, 270, 150, 30, 0, 0x0, 0},
 
-    {TEXT_CreateIndirect, "离子分析电极电位:", ID_TEXT_TEST_VOLT_INFO, 310, 310, 220, 30, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "00.00mV", ID_TEXT_TEST_VOLT_VALUE, 555, 310, 100, 30, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "离子分析溶液浓度:", ID_TEXT_TEST_CONCENT_INFO, 360, 310, 220, 30, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "0.0000mg/L", ID_TEXT_TEST_CONCENT_VALUE, 605, 310, 150, 30, 0, 0x0, 0},
 
-    {BUTTON_CreateIndirect, "空白实验1", ID_BUTTON_BLOCKTEST1, 320, 370, 120, 40, 0, 0x0, 0},
-    {BUTTON_CreateIndirect, "空白实验2", ID_BUTTON_BLOCKTEST2, 480, 370, 120, 40, 0, 0x0, 0},
-    {BUTTON_CreateIndirect, "离子分析", ID_BUTTON_TEST, 640, 370, 120, 40, 0, 0x0, 0},
+    {BUTTON_CreateIndirect, "空白实验1", ID_BUTTON_BLOCKTEST1, 370, 370, 110, 40, 0, 0x0, 0},
+    {BUTTON_CreateIndirect, "空白实验2", ID_BUTTON_BLOCKTEST2, 500, 370, 110, 40, 0, 0x0, 0},
+    {BUTTON_CreateIndirect, "离子分析", ID_BUTTON_TEST, 630, 370, 110, 40, 0, 0x0, 0},
 
-    {TEXT_CreateIndirect, "测试进度", ID_TEXT_PROGRESS, 310, 442, 100, 30, 0, 0x0, 0},
-    {PROGBAR_CreateIndirect, "Progbar", ID_PROGBAR_0, 410, 445, 360, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "测试进度", ID_TEXT_PROGRESS, 360, 442, 100, 30, 0, 0x0, 0},
+    {PROGBAR_CreateIndirect, "Progbar", ID_PROGBAR_0, 460, 445, 330, 25, 0, 0x0, 0},
 
     {BUTTON_CreateIndirect, "返回", ID_BUTTON_RETURN, 715, 5, 80, 40, 0, 0x0, 0}
 };
@@ -146,25 +170,65 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 
 static void graph_clear(void)
 {
-    GRAPH_DATA_XY_Clear(pdataGRP);
+    GRAPH_DATA_XY_Clear(curve_data);
     GRAPH_SCALE_SetOff(hScaleH, 0);
-    GRAPH_DATA_XY_SetOffX(pdataGRP, 0);
+    GRAPH_DATA_XY_SetOffX(curve_data, 0);
     point.x = 0;
 }
 
-static void update_block_volt(WM_HWIN hWin, struct test_data *td)
+static void update_block_concent(WM_HWIN hWin, struct test_data *td)
 {
     WM_HWIN hItem;
     char buf[32];
     
     if (tctrl.block1_finished && tctrl.block2_finished) {
-        td->volt_blockagv = (td->volt_block1 + td->volt_block2) / 2;
+        td->concent_blockave = (td->concent_block1 + td->concent_block2) / 2;
         tctrl.block_ready++;
-        hItem = WM_GetDialogItem(hWin, ID_TEXT_BLOCKTEST_VOLT_VALUE);
-        sprintf(buf, TEST_VOLT_FMT, td->volt_blockagv);
+        hItem = WM_GetDialogItem(hWin, ID_TEXT_BLOCKTEST_CONCENT_VALUE);
+        sprintf(buf, TEST_VOLT_FMT, td->concent_blockave);
         TEXT_SetText(hItem, buf);
     }
 }
+
+/**
+ * concent   mg/L
+ * volt      mV
+ * convert volt (-500mV ~ 200mV) to point.x (0 ~ 350)
+ * convert concent (0.01mg/L ~ 50.00mg/L) to point.y (0 ~ 320)
+*/
+static void data_to_point(float volt, float concent, GUI_POINT *p)
+{
+    p->x = (short)((volt + 500.0) / 2.5);
+    p->y = (short)(concent / 0.2);
+}
+
+static void graph_print_curve(GRAPH_DATA_Handle handle)
+{
+    GUI_POINT point;
+
+    data_to_point(-500.0, data_calc_concentration(-500.0), &point);
+    GRAPH_DATA_XY_AddPoint(handle, &point);
+    data_to_point(200.0, data_calc_concentration(200.0), &point);
+    GRAPH_DATA_XY_AddPoint(handle, &point);
+}
+
+static void graph_add_point(GRAPH_DATA_Handle handle, GUI_POINT *p)
+{
+    GUI_POINT point;
+
+    point.x = 0;
+    point.y = p->y;
+    GRAPH_DATA_XY_AddPoint(handle, &point);
+
+    point.x = p->x;
+    point.y = 0;
+    GRAPH_DATA_XY_AddPoint(handle, &point);
+
+    point.x = p->x;
+    point.y = p->y;
+    GRAPH_DATA_XY_AddPoint(handle, &point);    
+}
+
 /*********************************************************************
 *
 *       _cbDialog
@@ -191,33 +255,37 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         TEXT_SetTextAlign(hItem, GUI_TA_HCENTER);
 
         hItem = WM_GetDialogItem(pMsg->hWin, ID_GRAPH_0);
-        GRAPH_SetBorder(hItem, 25, 2, 3, 15);
-        GRAPH_SetGridVis(hItem, 2);
-        GRAPH_SetGridFixedX(hItem, 2);
+        GRAPH_SetBorder(hItem, 40, 2, 3, 15);
+        GRAPH_SetGridVis(hItem, 1);
+        GRAPH_SetGridFixedX(hItem, 1);
         GRAPH_SetGridDistY(hItem, 20);
-        GRAPH_SetGridDistX(hItem, 25);
+        GRAPH_SetGridDistX(hItem, 40);
 
         hScaleV = GRAPH_SCALE_Create(5, GUI_TA_LEFT, GRAPH_SCALE_CF_VERTICAL, 20);
         GRAPH_SCALE_SetTextColor(hScaleV, GUI_RED);
-        GRAPH_SCALE_SetOff(hScaleV, 20);
+        GRAPH_SCALE_SetFactor(hScaleV, 0.2);
+        GRAPH_SCALE_SetNumDecs(hScaleV, 2);
         GRAPH_AttachScale(hItem, hScaleV);
         
-        hScaleH = GRAPH_SCALE_Create(375, GUI_TA_HCENTER, GRAPH_SCALE_CF_HORIZONTAL, 50);
+        hScaleH = GRAPH_SCALE_Create(375, GUI_TA_HCENTER, GRAPH_SCALE_CF_HORIZONTAL, 40);
         GRAPH_SCALE_SetTextColor(hScaleH, GUI_DARKGREEN);
+        GRAPH_SCALE_SetOff(hScaleH, 200);
+        GRAPH_SCALE_SetFactor(hScaleH, 2.5);
         GRAPH_AttachScale(hItem, hScaleH);
-        pdataGRP = GRAPH_DATA_XY_Create(GUI_DARKGREEN, 100, 0, 0);
-        GRAPH_DATA_XY_SetOffY(pdataGRP, 20);
-        GRAPH_AttachData(hItem, pdataGRP);
-        GRAPH_DATA_XY_Clear(pdataGRP);
+
+        curve_data = GRAPH_DATA_XY_Create(GUI_BLUE, 10, 0, 0);
+        GRAPH_AttachData(hItem, curve_data);
+        GRAPH_DATA_XY_Clear(curve_data);
+        graph_print_curve(curve_data);
 
         // realtime volt
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLT_INFO);
-        TEXT_SetFont(hItem, &GUI_FontHZ_yahei_16);
-        TEXT_SetTextColor(hItem, GUI_BLACK_33);
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_SCALE_NAME_X);
+        TEXT_SetFont(hItem, GUI_FONT_24B_ASCII);
+        TEXT_SetTextColor(hItem, GUI_GREEN);
 
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLT_VALUE);
-        TEXT_SetFont(hItem, GUI_FONT_24_ASCII);
-        TEXT_SetTextColor(hItem, GUI_DARKGREEN);
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_SCALE_NAME_Y);
+        TEXT_SetFont(hItem, GUI_FONT_24B_ASCII);
+        TEXT_SetTextColor(hItem, GUI_RED);
 
         // weight
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_WEIGHT);
@@ -250,7 +318,9 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         EDIT_SetTextColor(hItem, EDIT_CI_ENABELD, GUI_DARKGREEN);
         EDIT_SetFont(hItem, GUI_FONT_24_ASCII);
         EDIT_SetTextAlign(hItem, TEXT_CF_HCENTER | TEXT_CF_VCENTER);
-        EDIT_SetText(hItem, "00.00mV");
+        EDIT_SetMaxLen(hItem, 16);
+        EDIT_SetText(hItem, "0.0000mg/L");
+        
 
         // block test 2
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_BLOCKTEST2);
@@ -261,23 +331,24 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         EDIT_SetTextColor(hItem, EDIT_CI_ENABELD, GUI_DARKGREEN);
         EDIT_SetFont(hItem, GUI_FONT_24_ASCII);
         EDIT_SetTextAlign(hItem, TEXT_CF_HCENTER | TEXT_CF_VCENTER);
-        EDIT_SetText(hItem, "00.00mV");
+        EDIT_SetMaxLen(hItem, 16);
+        EDIT_SetText(hItem, "0.0000mg/L");
 
         // block test average
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_BLOCKTEST_VOLT_INFO);
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_BLOCKTEST_CONCENT_INFO);
         TEXT_SetFont(hItem, &GUI_FontHZ_yahei_16);
         TEXT_SetTextColor(hItem, GUI_BLACK_33);
 
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_BLOCKTEST_VOLT_VALUE);
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_BLOCKTEST_CONCENT_VALUE);
         TEXT_SetFont(hItem, GUI_FONT_24_ASCII);
         TEXT_SetTextColor(hItem, GUI_DARKGREEN);
 
         // test volt
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_TEST_VOLT_INFO);
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_TEST_CONCENT_INFO);
         TEXT_SetFont(hItem, &GUI_FontHZ_yahei_16);
         TEXT_SetTextColor(hItem, GUI_BLACK_33);
 
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_TEST_VOLT_VALUE);
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_TEST_CONCENT_VALUE);
         TEXT_SetFont(hItem, GUI_FONT_24_ASCII);
         TEXT_SetTextColor(hItem, GUI_DARKGREEN);
 
@@ -368,12 +439,12 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 WM_Exec();
                 if (numpad_creat()) {
                     p = numpad_get();
-                    sscanf(p, "%f", &td->volt_block1);
-                    sprintf(strbuf, TEST_VOLT_FMT, td->volt_block1);
+                    sscanf(p, "%f", &td->concent_block1);
+                    sprintf(strbuf, TEST_CONCENT_FMT, td->concent_block1);
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_BLOCKTEST1);
                     EDIT_SetText(hItem, strbuf);
                     tctrl.block1_finished++;
-                    update_block_volt(pMsg->hWin, td);
+                    update_block_concent(pMsg->hWin, td);
                 }
                 test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                 break;
@@ -389,12 +460,12 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 WM_Exec();
                 if (numpad_creat()) {
                     p = numpad_get();
-                    sscanf(p, "%f", &td->volt_block2);
-                    sprintf(strbuf, TEST_VOLT_FMT, td->volt_block2);
+                    sscanf(p, "%f", &td->concent_block2);
+                    sprintf(strbuf, TEST_CONCENT_FMT, td->concent_block2);
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_BLOCKTEST2);
                     EDIT_SetText(hItem, strbuf);
                     tctrl.block2_finished++;
-                    update_block_volt(pMsg->hWin, td);
+                    update_block_concent(pMsg->hWin, td);
                 }
                 test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                 break;
@@ -420,6 +491,9 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 beep_clicked();
                 test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 0);
                 WM_Exec();
+
+                CHECK_ELECT_STATUS
+
                 g_diag_start.header = "提示";
                 g_diag_start.str_lin1 = "即将进行空白实验1";
                 g_diag_start.str_lin2 = "请将空白试样放置到试样台,并启动磁力搅拌器";
@@ -429,7 +503,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 if (result)
                     test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                 else {
-                    graph_clear();
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
                     PROGBAR_SetValue(hItem, 0);
                     run_cnt = TEST_LAST_CNT;
@@ -452,6 +525,9 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 beep_clicked();
                 test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 0);
                 WM_Exec();
+
+                CHECK_ELECT_STATUS
+
                 g_diag_start.header = "提示";
                 g_diag_start.str_lin1 = "即将进行空白实验2";
                 g_diag_start.str_lin2 = "请将空白试样放置到试样台,并启动磁力搅拌器";
@@ -461,7 +537,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 if (result)
                     test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                 else {
-                    graph_clear();
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
                     PROGBAR_SetValue(hItem, 0);
                     run_cnt = TEST_LAST_CNT;
@@ -479,6 +554,8 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 0);
                 WM_Exec();
 
+                CHECK_ELECT_STATUS
+
                 if (tctrl.block_ready) {
                     g_diag_start.header = "提示";
                     g_diag_start.str_lin1 = "即将进行离子分析";
@@ -489,7 +566,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                     if (result)
                         test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
                     else {
-                        graph_clear();
                         hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
                         PROGBAR_SetValue(hItem, 0);
                         run_cnt = TEST_LAST_CNT;
@@ -498,7 +574,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 } else {
                     g_diag_ok.header = "提示";
                     g_diag_ok.str_lin1 = "无法进行氨离子测量";
-                    g_diag_ok.str_lin2 = "请先进行空白实验或输入空白实验电压值";
+                    g_diag_ok.str_lin2 = "请先进行空白实验或输入空白实验溶液浓度";
                     g_diag_ok.str_lin3 = NULL;
                     diag_ok_creat();
                     test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
@@ -513,82 +589,80 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         }
         break;
     case WM_TIMER:
-        if (run_flag != RUN_IDLE) {
-            run_cnt--;
-            hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
-            PROGBAR_SetValue(hItem, test_progress(run_cnt));
-            volt = test_volt_get(); // take some time
-            WM_Exec();
+        if (run_flag == RUN_IDLE) {
+            WM_RestartTimer(pMsg->Data.v, 1000);
+            break;
+        }
 
-            if (run_cnt <= 0) {
-                beep_finished();
-                switch (run_flag) {
-                case RUN_BLOCK1:
-                    td->volt_block1 = volt;
-                    tctrl.block1_finished++;
-                    update_block_volt(pMsg->hWin, td);
-                    g_diag_ok.header = "空白实验1";
-                    g_diag_ok.str_lin1 = "完成空白实验1,采集到电压值为:";
-                    sprintf(strbuf, TEST_VOLT_FMT, volt);
-                    g_diag_ok.str_lin2 = strbuf;
-                    g_diag_ok.str_lin3 = NULL;
-                    diag_ok_creat();
-                    break;
-                case RUN_BLOCK2:
-                    td->volt_block2 = volt;
-                    tctrl.block1_finished++;
-                    update_block_volt(pMsg->hWin, td);
-                    g_diag_ok.header = "空白实验2";
-                    g_diag_ok.str_lin1 = "完成空白实验2,采集到电压值为:";
-                    sprintf(strbuf, TEST_VOLT_FMT, volt);
-                    g_diag_ok.str_lin2 = strbuf;
-                    g_diag_ok.str_lin3 = NULL;
-                    diag_ok_creat();
-                    break;
-                case RUN_TEST:
-                    td->volt_sample = volt;
-                    data_add_timestamp(td);
-                    data_save(td);
+        if (run_cnt <= 0) {
+            beep_finished();
+            switch (run_flag) {
+            case RUN_BLOCK1:
+                td->concent_block1 = data_calc_concentration(volt);
+                tctrl.block1_finished++;
+                update_block_concent(pMsg->hWin, td);
+                g_diag_ok.header = "空白实验1";
+                g_diag_ok.str_lin1 = "完成空白实验1,溶液浓度为:";
+                sprintf(strbuf, TEST_CONCENT_FMT, td->concent_block1);
+                g_diag_ok.str_lin2 = strbuf;
+                g_diag_ok.str_lin3 = NULL;
+                diag_ok_creat();
+                break;
+            case RUN_BLOCK2:
+                td->concent_block2 = data_calc_concentration(volt);
+                tctrl.block1_finished++;
+                update_block_concent(pMsg->hWin, td);
+                g_diag_ok.header = "空白实验2";
+                g_diag_ok.str_lin1 = "完成空白实验2,溶液浓度为:";
+                sprintf(strbuf, TEST_CONCENT_FMT, td->concent_block2);
+                g_diag_ok.str_lin2 = strbuf;
+                g_diag_ok.str_lin3 = NULL;
+                diag_ok_creat();
+                break;
+            case RUN_TEST:
+                td->concent_sample = data_calc_concentration(volt);
+                data_add_timestamp(td);
+                data_save(td);
 
-                    g_diag_res.cnt = 7;
-                    g_diag_res.header = "分析结果";
-                    g_diag_res.items[0].item = "试样质量：";
-                    sprintf(g_diag_res.items[0].value, "%.3fg", td->weight_sample);
-                    g_diag_res.items[1].item = "滤液体积：";
-                    sprintf(g_diag_res.items[1].value, "%.2fmL", td->volume_sample);
-                    g_diag_res.items[2].item = "空白实验1电极电位：";
-                    sprintf(g_diag_res.items[2].value, "%.2fmV", td->volt_block1);
-                    g_diag_res.items[3].item = "空白实验2电极电位：";
-                    sprintf(g_diag_res.items[3].value, "%.2fmV", td->volt_block2);
-                    g_diag_res.items[4].item = "空白实验平均电极电位：";
-                    sprintf(g_diag_res.items[4].value, "%.2fmV", td->volt_blockagv);
-                    g_diag_res.items[5].item = "试样电极电位：";
-                    sprintf(g_diag_res.items[5].value, "%.2fmV", td->volt_sample);
-                    g_diag_res.items[6].item = "氨离子含量：";
-                    sprintf(g_diag_res.items[6].value, "%.2fmg/kg", td->result);
-                    diag_result_creat();
-                    break;
-                default:
-                    break;
-                }
-                test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
-                run_flag = RUN_IDLE;
-                GUI_EndDialog(wait_diag_handle, 0);
-            } else
-                beep_clicked();
-        } else
-            volt = ad7705_read();
+                g_diag_res.cnt = 7;
+                g_diag_res.header = "分析结果";
+                g_diag_res.items[0].item = "试样质量：";
+                sprintf(g_diag_res.items[0].value,
+                    "%.3fg", td->weight_sample);
+                g_diag_res.items[1].item = "滤液体积：";
+                sprintf(g_diag_res.items[1].value,
+                    "%.2fmL", td->volume_sample);
+                g_diag_res.items[2].item = "空白实验1溶液浓度：";
+                sprintf(g_diag_res.items[2].value,
+                    TEST_CONCENT_FMT, td->concent_block1);
+                g_diag_res.items[3].item = "空白实验2溶液浓度：";
+                sprintf(g_diag_res.items[3].value,
+                    TEST_CONCENT_FMT, td->concent_block2);
+                g_diag_res.items[4].item = "空白实验平均溶液浓度：";
+                sprintf(g_diag_res.items[4].value,
+                    TEST_CONCENT_FMT, td->concent_blockave);
+                g_diag_res.items[5].item = "试样溶液浓度：";
+                sprintf(g_diag_res.items[5].value,
+                    TEST_CONCENT_FMT, td->concent_sample);
+                g_diag_res.items[6].item = "氨离子含量：";
+                sprintf(g_diag_res.items[6].value,
+                    "%.2fmg/kg", td->result);
+                diag_result_creat();
+                break;
+            default:
+                break;
+            }
 
-        sprintf(strbuf, TEST_VOLT_FMT, volt);
-        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLT_VALUE);
-        TEXT_SetText(hItem, strbuf);
+            test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
+            run_flag = RUN_IDLE;
+            GUI_EndDialog(wait_diag_handle, 0);
+            break;
+        }
 
-        if (point.x > 250)
-            graph_clear();
-
-        point.y = (int)volt;
-        GRAPH_DATA_XY_AddPoint(pdataGRP, &point);
-        point.x += 10;
+        run_cnt--;
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
+        PROGBAR_SetValue(hItem, test_progress(run_cnt));
+        WM_Exec();
 
         WM_RestartTimer(pMsg->Data.v, 1000);
         break;

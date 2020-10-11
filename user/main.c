@@ -23,6 +23,7 @@
 #include "beep.h"
 #include "ds18b20.h"
 #include "data.h"
+#include "test.h"
 #include "rtc.h"
 
 struct ui_msg g_ui_msg;
@@ -149,6 +150,7 @@ int main(void)
 	/* load from flash */
 	sysconf_load();
 	data_init();
+	test_init();
 
 	touch_init();
 	touch_calibrate(0);

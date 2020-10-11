@@ -4,6 +4,8 @@
 #include "stm32f2xx.h"
 #include "test.h"
 
+#define DATA_DEBUG    printf
+
 #define DATA_MAX_NUM         100
 
 struct test_data {
@@ -19,15 +21,33 @@ struct test_data {
     uint8_t day;
     uint8_t hour;
     uint8_t minute;
-    uint8_t placeholder0;
+    
     uint8_t placeholder1;
+    uint8_t elect_stat;
+
+    /**
+     * 其中 volt_01 为 0.1mg/mL的标准溶液，取10mL，稀释至100mL
+     * 则实际浓度为 10mg/L, 同理 volt_001 对应 1mg/L
+     * volt_0001 对应 0.1mg/mL
+     * 我们在计算时需要设计一个线性函数，y = ax + b,
+     * 其中 x 为对应某一浓度的电压值，单位为 mV
+     * 其中 y 为该电压值对应的浓度值，为了更好计算，
+     * 我们修改浓度的单位，修改为 ug/L, 那么
+     * volt_01 浓度为 10000ug/L
+     * volt_001 浓度为 1000ug/L
+     * volt_0001 浓度为 100ug/L
+     * 
+     */
+    float volt_01;
+    float volt_001;
+    float volt_0001;
 
     float weight_sample;
     float volume_sample;
-    float volt_block1;
-    float volt_block2;
-    float volt_blockagv;
-    float volt_sample;
+    float concent_block1;
+    float concent_block2;
+    float concent_blockave;
+    float concent_sample;
     float result;
 };
 
@@ -74,5 +94,8 @@ extern void data_add_timestamp(struct test_data *td);
 
 extern struct desc_reorder_list *desc_reorder_list_get(void);
 extern int data_reorder_list_update(struct desc_reorder_list *list);
+
+extern void data_calc_coeff(struct test_data *td);
+extern float data_calc_concentration(float volt);
 
 #endif

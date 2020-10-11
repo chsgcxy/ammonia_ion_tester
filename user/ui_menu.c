@@ -147,7 +147,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VERSION);
         TEXT_SetFont(hItem, GUI_FONT_20_ASCII);
         TEXT_SetTextColor(hItem, GUI_BLACK_33);
-
+        break;
     case WM_NOTIFY_PARENT:
         Id    = WM_GetId(pMsg->hWinSrc);
         NCode = pMsg->Data.v;
@@ -203,6 +203,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         default:
             break;
         }
+        break;
     default:
         WM_DefaultProc(pMsg);
         break;

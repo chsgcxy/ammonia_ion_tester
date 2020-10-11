@@ -14,12 +14,6 @@
     float2 = temp;                        \
 } while(0);
 
-
-int test_init(void)
-{
-    return 0;
-}
-
 float test_volt_get(void)
 {    
     int i, j;
@@ -65,4 +59,13 @@ void test_enable_all_items(WM_HWIN hWin, int low, int high, int enable)
             hItem = WM_GetDialogItem(hWin, id);
             WM_DisableWindow(hItem);
         }
+}
+
+
+static int check_stat = 0;
+
+
+int test_init(void)
+{
+    return 0;
 }

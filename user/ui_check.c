@@ -139,6 +139,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     int i;
     HEADER_Handle hHeader;
     int     result;
+    struct test_data *td;
 
     switch (pMsg->MsgId) {
     case WM_INIT_DIALOG:
@@ -384,17 +385,17 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 hItem = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
                 switch (run_flag) {
                 case RUN_01MG:
-                    g_check_data.volt_01 = volt;
+                    g_check_data.volt_01 = -120.0;
                     g_check_data.done_01++;
                     LISTVIEW_SetItemText(hItem, 1, 4, strbuf);
                     break;
                 case RUN_001MG:
-                    g_check_data.volt_001 = volt;
+                    g_check_data.volt_001 = -65.0;
                     g_check_data.done_001++;
                     LISTVIEW_SetItemText(hItem, 1, 2, strbuf);
                     break;
                 case RUN_0001MG:
-                    g_check_data.volt_0001 = volt;
+                    g_check_data.volt_0001 = -10.0;
                     g_check_data.done_0001++;
                     LISTVIEW_SetItemText(hItem, 1, 0, strbuf);
                     break;
@@ -411,7 +412,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                     LISTVIEW_SetItemText(hItem, 2, 3, strbuf);
                     if (check_volt_diff(g_check_data.diff_01_001))
                         LISTVIEW_SetItemText(hItem, 3, 3, "失败");
-                    else
+                    else {}
                         LISTVIEW_SetItemText(hItem, 3, 3, "通过");
                 }
 
@@ -433,6 +434,12 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 if (g_check_data.done_01 &&
                     g_check_data.done_001 &&
                     g_check_data.done_0001) {
+                    td = data_obj();
+                    td->volt_0001 = g_check_data.volt_0001;
+                    td->volt_001 = g_check_data.volt_001;
+                    td->volt_01 = g_check_data.volt_01;
+                    data_calc_coeff(td);
+
                     hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_RESULT_VALUE);
                     g_diag_ok.header = "结果";
                     g_diag_ok.str_lin1 = "电极校对结果为：";
@@ -441,10 +448,12 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                         TEXT_SetText(hItem, "通过");
                         g_diag_ok.str_lin2 = "通过";
                         g_diag_ok.str_lin3 = "满足实验要求，可以进行实验";
+                        td->elect_stat = CHECK_PASS;
                     } else {
                         TEXT_SetText(hItem, "未通过");
                         g_diag_ok.str_lin2 = "未通过";
                         g_diag_ok.str_lin3 = "请及时检查或更换电极";
+                        td->elect_stat = CHECK_FAIL;
                     }
                     diag_ok_creat();
                 }

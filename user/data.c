@@ -127,7 +127,7 @@ static void data_header_save(struct data_header *hdr)
 struct data_desc *data_desc_get(int index)
 {
     static struct data_desc desc_table[DATA_MAX_NUM];
-    
+    DATA_DEBUG("%s: get desc index %d\r\n", __FUNCTION__, index);
     if (index < DATA_MAX_NUM)
         return &desc_table[index];
     else
@@ -138,12 +138,12 @@ static void data_desc_update(int idx, const struct test_data *td)
 {
     struct data_desc *desc = data_desc_get(idx);
 
-    if (!desc)
-        return;
+    DATA_DEBUG("%s: desc.index %d, data.valid %d, data.index %d\r\n",
+        __FUNCTION__, idx, td->valid, td->index);
 
     if (td->magic == DATA_MAGIC) {
+        desc->idx = td->index;
         desc->valid = td->valid;
-        desc->idx = idx;
     } else
         desc->valid = 0;
 
@@ -159,6 +159,7 @@ int data_save(struct test_data *stream)
 
     stream->magic = DATA_MAGIC;
     stream->index = hdr->next_sector - hdr->start_sector;
+    DATA_DEBUG("%s: data index %d\r\n", __FUNCTION__, stream->index);
     stream->valid = 1;
     stream->crc = crc8((uint8_t *)(&stream->index),
         sizeof(struct test_data) - 2);
@@ -184,6 +185,8 @@ int data_delete_one(int desc_idx, int data_idx)
 {
     struct data_header *hdr = data_header_obj();
 
+    DATA_DEBUG("%s: delete desc %d data %d total %d\r\n",
+        __FUNCTION__, desc_idx, data_idx, hdr->cnt);
     if (data_idx < hdr->cnt) {
         data_flash_read((uint8_t *)&data_tmp,
             hdr->start_sector + data_idx, sizeof(struct test_data));
@@ -220,6 +223,8 @@ int data_read(struct test_data *stream, int idx)
 {
     struct data_header *hdr = data_header_obj();
 
+    DATA_DEBUG("%s: read data %d total %d\r\n",
+        __FUNCTION__, idx, hdr->cnt);
     if (idx < hdr->cnt) {
         data_flash_read((uint8_t *)stream,
             hdr->start_sector + idx, sizeof(struct test_data));
@@ -250,21 +255,34 @@ int data_reorder_list_update(struct desc_reorder_list *list)
     struct data_desc *desc;
     struct data_header *hdr = data_header_obj();
 
+    DATA_DEBUG("%s: update list, head %d, tail %d total %d\r\n",
+        __FUNCTION__, hdr->start_sector, hdr->next_sector,
+        hdr->cnt);
     cnt = hdr->next_sector - hdr->start_sector;
     latest = cnt - 1;
     for (i = latest; i >= 0; i--) {
         desc = data_desc_get(i);
-        list->descs[id++] = desc;
+        if (desc->valid) {
+            DATA_DEBUG("%s: add desc %d to list %d\r\n",
+                __FUNCTION__, i, id);
+            list->descs[id++] = desc;
+        }
     }
 
     if (hdr->cnt > cnt) {
         for (i = hdr->cnt - 1; i > latest; i--) {
             desc = data_desc_get(i);
-            list->descs[id++] = desc;
+            if (desc->valid) {
+                DATA_DEBUG("%s: add desc %d to list %d\r\n",
+                    __FUNCTION__, i, id);
+                list->descs[id++] = desc;
+            }
         }
     }
 
     list->cnt = id;
+    DATA_DEBUG("%s: total %d valid data record\r\n",
+        __FUNCTION__, id);
 
     return id;
 }
@@ -273,11 +291,15 @@ int data_init(void)
 {
     int data_idx;
     struct data_header *hdr = data_header_obj();
+    struct test_data *td = data_obj();
 
+    td->elect_stat = CHECK_UNDO;
     data_header_init(hdr);
+    DATA_DEBUG("%s: init total %d records\r\n",
+        __FUNCTION__, hdr->cnt);
     
     for (data_idx = 0; data_idx < hdr->cnt; data_idx++) {
-        data_flash_read((uint8_t *)(&data_tmp),
+        data_flash_read((uint8_t *)&data_tmp,
             hdr->start_sector + data_idx, sizeof(struct test_data));
         data_desc_update(data_idx, &data_tmp);
     }
@@ -343,23 +365,34 @@ int data_file_export(struct desc_reorder_list *list)
             data_tmp.year, data_tmp.month, data_tmp.day,
             data_tmp.hour, data_tmp.minute);
         f_write(&file, line, strlen(line), &bw);
+        switch (data_tmp.elect_stat) {
+        case CHECK_PASS:
+            sprintf(line, "电极状态:  正常\r\n");
+            break;
+        case CHECK_FAIL:
+        case CHECK_UNDO:        
+        default:
+            sprintf(line, "电极状态:  异常\r\n");
+            break;
+        }
+        f_write(&file, line, strlen(line), &bw);
         sprintf(line, "试样质量:  %.3fg\r\n",
             data_tmp.weight_sample);
         f_write(&file, line, strlen(line), &bw);
         sprintf(line, "滤液体积:  %.2fmL\r\n",
             data_tmp.volume_sample);
         f_write(&file, line, strlen(line), &bw);
-        sprintf(line, "空白实验1电极电位:  %.2fmV\r\n",
-            data_tmp.volt_block1);
+        sprintf(line, "空白实验1溶液浓度:  %.4fmg/L\r\n",
+            data_tmp.concent_block1);
         f_write(&file, line, strlen(line), &bw);
-        sprintf(line, "空白实验2电极电位:  %.2fmV\r\n",
-            data_tmp.volt_block2);
+        sprintf(line, "空白实验2溶液浓度:  %.4fmg/L\r\n",
+            data_tmp.concent_block2);
         f_write(&file, line, strlen(line), &bw);
-        sprintf(line, "空白实验平均电极电位:  %.2fmV\r\n",
-            data_tmp.volt_blockagv);
+        sprintf(line, "空白实验平均溶液浓度:  %.4fmg/L\r\n",
+            data_tmp.concent_blockave);
         f_write(&file, line, strlen(line), &bw);
-        sprintf(line, "试样电极电位:  %.2fmV\r\n",
-            data_tmp.volt_sample);
+        sprintf(line, "试样溶液浓度:  %.4fmg/L\r\n",
+            data_tmp.concent_sample);
         f_write(&file, line, strlen(line), &bw);
         sprintf(line, "氨离子含量:  %.2fmg/kg\r\n",
             data_tmp.result);
@@ -382,4 +415,54 @@ void data_add_timestamp(struct test_data *td)
     td->day = RTC_DateStructure.RTC_Date;
     td->hour = RTC_TimeStructure.RTC_Hours;
     td->minute = RTC_TimeStructure.RTC_Minutes;
+}
+
+/**
+ * y = ax + b
+ * 其中 y 为溶液浓度，单位为 ug/L
+ * 其中 x 为对应浓度下测得的电压值，单位为 mV
+*/
+struct data_coeff {
+    float a;
+    float b;
+};
+
+static struct data_coeff dcoeff;
+
+void data_calc_coeff(struct test_data *td)
+{
+    float x_avg, y_avg;
+    float sum_xy;
+    float nxy_avg;
+    float sum_x2;
+    float nx_avg2;
+    float a, b;
+
+    x_avg = (td->volt_01 + td->volt_001 + td->volt_0001) / 3;
+    y_avg = (10000.0 + 1000.0 + 100.0) / 3;
+    sum_xy = td->volt_01 * 10000.0 + td->volt_001 * 1000.0 +
+        td->volt_0001 * 100.0;
+    nxy_avg = (10000.0 + 1000.0 + 100.0) *
+        (td->volt_01 + td->volt_001 + td->volt_0001) / 3;
+    sum_x2 = td->volt_01 * td->volt_01 +
+        td->volt_001 * td->volt_001 +
+        td->volt_0001 * td->volt_0001;
+    nx_avg2 = x_avg * x_avg * 3;
+
+    a = (sum_xy - nxy_avg) / (sum_x2 - nx_avg2);
+    b = y_avg - a * x_avg;
+
+    dcoeff.a = a;
+    dcoeff.b = b;
+    DATA_DEBUG("%s: calc coeff a = %f, b = %f\r\n",
+        __FUNCTION__, a, b);
+}
+
+/* return a concent (mg/L) */
+float data_calc_concentration(float volt)
+{
+    float concent = dcoeff.a * volt + dcoeff.b;
+    DATA_DEBUG("%s: volt %fmV  convert to %fug/L\r\n",
+        __FUNCTION__, volt, concent);
+    return concent / 1000;
 }

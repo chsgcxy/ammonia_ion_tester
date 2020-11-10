@@ -8,10 +8,10 @@
  * */
 #define STRING_DATE             "测试日期:"
 #define STRING_RESULT           "氨离子含量:"
-#define STRING_SAMPLE_VOLT      "试样电极电位:"
-#define STRING_BLOCKAVG_VOLT    "空白实验平均电极电位:"
-#define STRING_BLOCK2_VOLT      "空白实验2电极电位:"
-#define STRING_BLOCK1_VOLT      "空白实验1电极电位:"
+#define STRING_SAMPLE_VOLT      "试样溶液浓度:"
+#define STRING_BLOCKAVG_VOLT    "空白实验平均溶液浓度:"
+#define STRING_BLOCK2_VOLT      "空白实验2溶液浓度:"
+#define STRING_BLOCK1_VOLT      "空白实验1溶液浓度:"
 #define STRING_SAMPLE_VOLUME    "试样体积:"
 #define STRING_SAMPLE_WEIGHT    "试样质量:"
 #define STRING_INDEX            "实验编号:"
@@ -34,6 +34,8 @@ int report_init(struct tprinter *printer)
 int report_show(struct test_data *td)
 {
     char buf[64];
+
+    printf("report!\r\n");
     
     tprinter_prepare(report_printer);
     tprinter_zoomin(report_printer, 1, 1);
@@ -52,22 +54,22 @@ int report_show(struct test_data *td)
     tprinter_newline(report_printer);
 
     tprinter_send(report_printer, STRING_SAMPLE_VOLT, sizeof(STRING_SAMPLE_VOLT));
-    sprintf(buf, "%.2fmV", td->concent_sample);
+    sprintf(buf, TEST_CONCENT_FMT, td->concent_sample);
     tprinter_send(report_printer, (uint8_t *)buf, strlen(buf));
     tprinter_newline(report_printer);
 
     tprinter_send(report_printer, STRING_BLOCKAVG_VOLT, sizeof(STRING_BLOCKAVG_VOLT));
-    sprintf(buf, "%.2fmV", td->concent_blockave);
+    sprintf(buf, TEST_CONCENT_FMT, td->concent_blockave);
     tprinter_send(report_printer, (uint8_t *)buf, strlen(buf));
     tprinter_newline(report_printer);
 
     tprinter_send(report_printer, STRING_BLOCK2_VOLT, sizeof(STRING_BLOCK2_VOLT));
-    sprintf(buf, "%.2fmV", td->concent_block2);
+    sprintf(buf, TEST_CONCENT_FMT, td->concent_block2);
     tprinter_send(report_printer, (uint8_t *)buf, strlen(buf));
     tprinter_newline(report_printer);
 
     tprinter_send(report_printer, STRING_BLOCK1_VOLT, sizeof(STRING_BLOCK1_VOLT));
-    sprintf(buf, "%.2fmV", td->concent_block1);
+    sprintf(buf, TEST_CONCENT_FMT, td->concent_block1);
     tprinter_send(report_printer, (uint8_t *)buf, strlen(buf));
     tprinter_newline(report_printer);
 

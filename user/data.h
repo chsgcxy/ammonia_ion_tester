@@ -4,7 +4,8 @@
 #include "stm32f2xx.h"
 #include "test.h"
 
-#define DATA_DEBUG    printf
+#define DATA_DEBUG(fmt, args...)    printf(fmt, ##args)
+//#define DATA_DEBUG(fmt, args...)
 
 #define DATA_MAX_NUM         100
 
@@ -97,5 +98,6 @@ extern int data_reorder_list_update(struct desc_reorder_list *list);
 
 extern void data_calc_coeff(struct test_data *td);
 extern float data_calc_concentration(float volt);
+extern void data_calc_result(struct test_data *td);
 
 #endif

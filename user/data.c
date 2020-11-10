@@ -466,3 +466,9 @@ float data_calc_concentration(float volt)
         __FUNCTION__, volt, concent);
     return concent / 1000;
 }
+
+void data_calc_result(struct test_data *td)
+{
+    td->result = (td->concent_sample - td->concent_blockave) *
+        td->volume_sample / td->weight_sample;
+}

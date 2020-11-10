@@ -374,7 +374,8 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             PROGBAR_SetValue(hItem, test_progress(run_cnt));
 
             if (run_cnt <= 0) {
-                volt = test_volt_get(); // take some time
+                //volt = test_volt_get(); // take some time
+                volt = -80.0;
                 sprintf(strbuf, TEST_VOLT_FMT, volt);
                 hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLT_VALUE);
                 TEXT_SetText(hItem, strbuf);
@@ -461,16 +462,16 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 run_flag = RUN_IDLE;
             } else {
                 /* on progress not finished */
-                volt = ad7705_read();
+                //volt = ad7705_read();
                 sprintf(strbuf, TEST_VOLT_FMT, volt);
                 hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLT_VALUE);
                 TEXT_SetText(hItem, strbuf);
                 WM_Exec();
-                beep_clicked(); // update progress after update UI
+                //beep_clicked(); // update progress after update UI
             }
         } else {
             /* idle status */
-            volt = ad7705_read();
+            //volt = ad7705_read();
             sprintf(strbuf, TEST_VOLT_FMT, volt);
             hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLT_VALUE);
             TEXT_SetText(hItem, strbuf);

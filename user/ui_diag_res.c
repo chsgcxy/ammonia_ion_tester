@@ -68,21 +68,21 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
     {IMAGE_CreateIndirect, "Image", ID_IMAGE_0, 5, 5, 32, 32, 0, 0, 0},
     {TEXT_CreateIndirect, "header", ID_TEXT_HEAD, 52, 5, 200, 25, 0, 0x0, 0},
     {TEXT_CreateIndirect, "line1", ID_TEXT_ITEM1, 10, 50, 300, 25, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "value1", ID_TEXT_VALUE1,320, 50, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value1", ID_TEXT_VALUE1,320, 50, 300, 25, 0, 0x0, 0},
     {TEXT_CreateIndirect, "line2", ID_TEXT_ITEM2, 10, 80, 300, 25, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "value2", ID_TEXT_VALUE2,320, 80, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value2", ID_TEXT_VALUE2,320, 80, 300, 25, 0, 0x0, 0},
     {TEXT_CreateIndirect, "line3", ID_TEXT_ITEM3, 10, 110, 300, 25, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "value3", ID_TEXT_VALUE3,320, 110, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value3", ID_TEXT_VALUE3,320, 110, 300, 25, 0, 0x0, 0},
     {TEXT_CreateIndirect, "line4", ID_TEXT_ITEM4, 10, 140, 300, 25, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "value4", ID_TEXT_VALUE4,320, 140, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value4", ID_TEXT_VALUE4,320, 140, 300, 25, 0, 0x0, 0},
     {TEXT_CreateIndirect, "line5", ID_TEXT_ITEM5, 10, 170, 300, 25, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "value5", ID_TEXT_VALUE5,320, 170, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value5", ID_TEXT_VALUE5,320, 170, 300, 25, 0, 0x0, 0},
     {TEXT_CreateIndirect, "line6", ID_TEXT_ITEM6, 10, 200, 300, 25, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "value6", ID_TEXT_VALUE6, 320, 200, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value6", ID_TEXT_VALUE6, 320, 200, 300, 25, 0, 0x0, 0},
     {TEXT_CreateIndirect, "line7", ID_TEXT_ITEM7, 10, 230, 300, 25, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "value7", ID_TEXT_VALUE7, 320, 230, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value7", ID_TEXT_VALUE7, 320, 230, 300, 25, 0, 0x0, 0},
     {TEXT_CreateIndirect, "line8", ID_TEXT_ITEM8, 10, 260, 300, 25, 0, 0x0, 0},
-    {TEXT_CreateIndirect, "value8", ID_TEXT_VALUE8, 320, 260, 100, 25, 0, 0x0, 0},
+    {TEXT_CreateIndirect, "value8", ID_TEXT_VALUE8, 320, 260, 300, 25, 0, 0x0, 0},
     {BUTTON_CreateIndirect, "´òÓ¡", ID_BUTTON_PRINT, 20, 310, 140, 40, 0, 0x0, 0},
     {BUTTON_CreateIndirect, "Íê³É", ID_BUTTON_QUIT, 340, 310, 140, 40, 0, 0x0, 0},
     // USER START (Optionally insert additional widgets)
@@ -97,7 +97,7 @@ static void _cbDialog(WM_MESSAGE *pMsg)
     int NCode;
     int Id;
     int i;
-    struct test_data *td = data_obj();
+    struct test_data *td;
     // USER START (Optionally insert additional variables)
     // USER END
 
@@ -155,11 +155,12 @@ static void _cbDialog(WM_MESSAGE *pMsg)
             case WM_NOTIFICATION_CLICKED:
                 // USER START (Optionally insert code for reacting on notification message)
                 beep_clicked();
-                test_enable_all_items(pMsg->hWin, ID_TEXT_HEAD, ID_BUTTON_QUIT, 0);
-                WM_Exec();
-                //test_print_result();
+                //test_enable_all_items(pMsg->hWin, ID_BUTTON_PRINT, ID_BUTTON_QUIT, 0);
+                //WM_Exec();
+                td = data_obj();
                 report_show(td);
-                test_enable_all_items(pMsg->hWin, ID_TEXT_HEAD, ID_BUTTON_QUIT, 1);
+                //printf("print finished\r\n");
+                //test_enable_all_items(pMsg->hWin, ID_BUTTON_PRINT, ID_BUTTON_QUIT, 1);
                 // USER END
                 break;
             case WM_NOTIFICATION_RELEASED:

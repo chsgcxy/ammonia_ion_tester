@@ -73,6 +73,7 @@
 #define ID_BUTTON_RETURN        (GUI_ID_USER + 0x15)
 
 #define ID_TEXT_HEADER          (GUI_ID_USER + 0x16)
+#define ID_TEXT_POINT           (GUI_ID_USER + 0x17)
 
 #define CHECK_ELECT_STATUS {\
     switch (td->elect_stat) { \
@@ -97,6 +98,8 @@
     } \
 }
 
+#define TEST_DEBUG(fmt, args...)   printf(fmt, ##args)
+//#define TEST_DEBUG(fmt, args...)
 
 enum run_flags{
     RUN_IDLE = 0x0,
@@ -116,14 +119,14 @@ extern const GUI_FONT GUI_FontHZ_yahei_16;
 // USER END
 
 static GRAPH_SCALE_Handle hScaleV, hScaleH;
-static GRAPH_DATA_Handle curve_data;
+static GRAPH_DATA_Handle curve_data_handle;
+static GRAPH_DATA_Handle point_data_handle;
 static WM_HWIN wait_diag_handle;
 static char strbuf[32];
 struct test_ctrl tctrl;
 static float volt = 0.0;
 static int run_flag = RUN_IDLE;
 static int run_cnt = TEST_LAST_CNT;
-static GUI_POINT point = {0, 0};
 /*********************************************************************
 *
 *       _aDialogCreate
@@ -159,6 +162,8 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
     {BUTTON_CreateIndirect, "空白实验2", ID_BUTTON_BLOCKTEST2, 500, 370, 110, 40, 0, 0x0, 0},
     {BUTTON_CreateIndirect, "离子分析", ID_BUTTON_TEST, 630, 370, 110, 40, 0, 0x0, 0},
 
+    {TEXT_CreateIndirect, "(1,1)", ID_TEXT_POINT, 10, 442, 250, 30, 0, 0x0, 0},
+
     {TEXT_CreateIndirect, "测试进度", ID_TEXT_PROGRESS, 360, 442, 100, 30, 0, 0x0, 0},
     {PROGBAR_CreateIndirect, "Progbar", ID_PROGBAR_0, 460, 445, 330, 25, 0, 0x0, 0},
 
@@ -168,24 +173,18 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 // USER START (Optionally insert additional static code)
 // USER END
 
-static void graph_clear(void)
-{
-    GRAPH_DATA_XY_Clear(curve_data);
-    GRAPH_SCALE_SetOff(hScaleH, 0);
-    GRAPH_DATA_XY_SetOffX(curve_data, 0);
-    point.x = 0;
-}
-
 static void update_block_concent(WM_HWIN hWin, struct test_data *td)
 {
     WM_HWIN hItem;
     char buf[32];
     
     if (tctrl.block1_finished && tctrl.block2_finished) {
+        TEST_DEBUG("%s: calc block average concent\r\n",
+            __FUNCTION__);
         td->concent_blockave = (td->concent_block1 + td->concent_block2) / 2;
         tctrl.block_ready++;
         hItem = WM_GetDialogItem(hWin, ID_TEXT_BLOCKTEST_CONCENT_VALUE);
-        sprintf(buf, TEST_VOLT_FMT, td->concent_blockave);
+        sprintf(buf, TEST_CONCENT_FMT, td->concent_blockave);
         TEXT_SetText(hItem, buf);
     }
 }
@@ -199,34 +198,50 @@ static void update_block_concent(WM_HWIN hWin, struct test_data *td)
 static void data_to_point(float volt, float concent, GUI_POINT *p)
 {
     p->x = (short)((volt + 500.0) / 2.5);
-    p->y = (short)(concent / 0.2);
+    p->y = (short)(concent / 0.18);
 }
 
-static void graph_print_curve(GRAPH_DATA_Handle handle)
+static void graph_curve_show(void)
 {
     GUI_POINT point;
 
     data_to_point(-500.0, data_calc_concentration(-500.0), &point);
-    GRAPH_DATA_XY_AddPoint(handle, &point);
+    GRAPH_DATA_XY_AddPoint(curve_data_handle, &point);
     data_to_point(200.0, data_calc_concentration(200.0), &point);
-    GRAPH_DATA_XY_AddPoint(handle, &point);
+    GRAPH_DATA_XY_AddPoint(curve_data_handle, &point);
 }
 
-static void graph_add_point(GRAPH_DATA_Handle handle, GUI_POINT *p)
+static void graph_point_add(WM_HWIN hwin, float volt, float concent)
 {
-    GUI_POINT point;
+    GUI_POINT point, point_draw;
+    WM_HWIN hItem;
+    char buf[32];
 
-    point.x = 0;
-    point.y = p->y;
-    GRAPH_DATA_XY_AddPoint(handle, &point);
+    data_to_point(volt, concent, &point);
 
-    point.x = p->x;
-    point.y = 0;
-    GRAPH_DATA_XY_AddPoint(handle, &point);
+    point_draw.x = 0;
+    point_draw.y = point.y;
+    GRAPH_DATA_XY_AddPoint(point_data_handle, &point_draw);
 
-    point.x = p->x;
-    point.y = p->y;
-    GRAPH_DATA_XY_AddPoint(handle, &point);    
+    GRAPH_DATA_XY_AddPoint(point_data_handle, &point);
+
+    point_draw.x = point.x;
+    point_draw.y = 0;
+    GRAPH_DATA_XY_AddPoint(point_data_handle, &point_draw);
+
+    hItem = WM_GetDialogItem(hwin, ID_TEXT_POINT);
+    WM_ShowWindow(hItem);
+    sprintf(buf, "(%.1f, %.4f)", volt, concent);
+    TEXT_SetText(hItem, buf);
+}
+
+static void graph_point_remove(WM_HWIN hwin)
+{
+    WM_HWIN hItem;
+    hItem = WM_GetDialogItem(hwin, ID_TEXT_POINT);
+    WM_HideWindow(hItem);
+
+    GRAPH_DATA_XY_Clear(point_data_handle);
 }
 
 /*********************************************************************
@@ -260,10 +275,12 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         GRAPH_SetGridFixedX(hItem, 1);
         GRAPH_SetGridDistY(hItem, 20);
         GRAPH_SetGridDistX(hItem, 40);
+        GRAPH_SetLineStyleH(hItem, GUI_LS_DOT);
+        GRAPH_SetLineStyleV(hItem, GUI_LS_DOT);
 
         hScaleV = GRAPH_SCALE_Create(5, GUI_TA_LEFT, GRAPH_SCALE_CF_VERTICAL, 20);
         GRAPH_SCALE_SetTextColor(hScaleV, GUI_RED);
-        GRAPH_SCALE_SetFactor(hScaleV, 0.2);
+        GRAPH_SCALE_SetFactor(hScaleV, 0.18);
         GRAPH_SCALE_SetNumDecs(hScaleV, 2);
         GRAPH_AttachScale(hItem, hScaleV);
         
@@ -273,10 +290,15 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         GRAPH_SCALE_SetFactor(hScaleH, 2.5);
         GRAPH_AttachScale(hItem, hScaleH);
 
-        curve_data = GRAPH_DATA_XY_Create(GUI_BLUE, 10, 0, 0);
-        GRAPH_AttachData(hItem, curve_data);
-        GRAPH_DATA_XY_Clear(curve_data);
-        graph_print_curve(curve_data);
+        curve_data_handle = GRAPH_DATA_XY_Create(GUI_BLUE, 4, 0, 0);
+        GRAPH_DATA_XY_SetPenSize(curve_data_handle, 2);
+        GRAPH_AttachData(hItem, curve_data_handle);
+        graph_curve_show();
+
+        point_data_handle = GRAPH_DATA_XY_Create(GUI_RED, 4, 0, 0);
+        GRAPH_DATA_XY_SetLineStyle(point_data_handle, GUI_LS_DOT);
+        GRAPH_DATA_XY_SetPenSize(point_data_handle, 1);
+        GRAPH_AttachData(hItem, point_data_handle);
 
         // realtime volt
         hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_SCALE_NAME_X);
@@ -376,6 +398,11 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         PROGBAR_SetSkinClassic(hItem);
         PROGBAR_SetMinMax(hItem, 0, 100);
         PROGBAR_SetValue(hItem, 0);
+
+        hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_POINT);
+        TEXT_SetFont(hItem, GUI_FONT_24_ASCII);
+        TEXT_SetTextColor(hItem, GUI_RED);
+        WM_HideWindow(hItem);
 
         // return
         hItem = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_RETURN);
@@ -489,6 +516,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             switch (NCode) {
             case WM_NOTIFICATION_CLICKED:
                 beep_clicked();
+                graph_point_remove(pMsg->hWin);
                 test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 0);
                 WM_Exec();
 
@@ -523,6 +551,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             switch (NCode) {
             case WM_NOTIFICATION_CLICKED:
                 beep_clicked();
+                graph_point_remove(pMsg->hWin);
                 test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 0);
                 WM_Exec();
 
@@ -541,6 +570,12 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                     PROGBAR_SetValue(hItem, 0);
                     run_cnt = TEST_LAST_CNT;
                     run_flag = RUN_BLOCK2;
+                    g_diag_wait.header = "提示";
+                    g_diag_wait.str_lin1 = "正在进行空白实验2";
+                    g_diag_wait.str_lin2 = NULL;
+                    g_diag_wait.str_lin3 = "请稍后......";
+                    wait_diag_handle = diag_wait_creat(320);
+                    GUI_ExecCreatedDialog(wait_diag_handle);
                 }
                 break;
             default:
@@ -551,6 +586,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             switch (NCode) {
             case WM_NOTIFICATION_CLICKED:
                 beep_clicked();
+                graph_point_remove(pMsg->hWin);
                 test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 0);
                 WM_Exec();
 
@@ -570,6 +606,12 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                         PROGBAR_SetValue(hItem, 0);
                         run_cnt = TEST_LAST_CNT;
                         run_flag = RUN_TEST;
+                        g_diag_wait.header = "提示";
+                        g_diag_wait.str_lin1 = "正在进行离子分析";
+                        g_diag_wait.str_lin2 = NULL;
+                        g_diag_wait.str_lin3 = "请稍后......";
+                        wait_diag_handle = diag_wait_creat(320);
+                        GUI_ExecCreatedDialog(wait_diag_handle);
                     }
                 } else {
                     g_diag_ok.header = "提示";
@@ -594,76 +636,92 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             break;
         }
 
-        if (run_cnt <= 0) {
-            beep_finished();
-            switch (run_flag) {
-            case RUN_BLOCK1:
-                td->concent_block1 = data_calc_concentration(volt);
-                tctrl.block1_finished++;
-                update_block_concent(pMsg->hWin, td);
-                g_diag_ok.header = "空白实验1";
-                g_diag_ok.str_lin1 = "完成空白实验1,溶液浓度为:";
-                sprintf(strbuf, TEST_CONCENT_FMT, td->concent_block1);
-                g_diag_ok.str_lin2 = strbuf;
-                g_diag_ok.str_lin3 = NULL;
-                diag_ok_creat();
-                break;
-            case RUN_BLOCK2:
-                td->concent_block2 = data_calc_concentration(volt);
-                tctrl.block1_finished++;
-                update_block_concent(pMsg->hWin, td);
-                g_diag_ok.header = "空白实验2";
-                g_diag_ok.str_lin1 = "完成空白实验2,溶液浓度为:";
-                sprintf(strbuf, TEST_CONCENT_FMT, td->concent_block2);
-                g_diag_ok.str_lin2 = strbuf;
-                g_diag_ok.str_lin3 = NULL;
-                diag_ok_creat();
-                break;
-            case RUN_TEST:
-                td->concent_sample = data_calc_concentration(volt);
-                data_add_timestamp(td);
-                data_save(td);
-
-                g_diag_res.cnt = 7;
-                g_diag_res.header = "分析结果";
-                g_diag_res.items[0].item = "试样质量：";
-                sprintf(g_diag_res.items[0].value,
-                    "%.3fg", td->weight_sample);
-                g_diag_res.items[1].item = "滤液体积：";
-                sprintf(g_diag_res.items[1].value,
-                    "%.2fmL", td->volume_sample);
-                g_diag_res.items[2].item = "空白实验1溶液浓度：";
-                sprintf(g_diag_res.items[2].value,
-                    TEST_CONCENT_FMT, td->concent_block1);
-                g_diag_res.items[3].item = "空白实验2溶液浓度：";
-                sprintf(g_diag_res.items[3].value,
-                    TEST_CONCENT_FMT, td->concent_block2);
-                g_diag_res.items[4].item = "空白实验平均溶液浓度：";
-                sprintf(g_diag_res.items[4].value,
-                    TEST_CONCENT_FMT, td->concent_blockave);
-                g_diag_res.items[5].item = "试样溶液浓度：";
-                sprintf(g_diag_res.items[5].value,
-                    TEST_CONCENT_FMT, td->concent_sample);
-                g_diag_res.items[6].item = "氨离子含量：";
-                sprintf(g_diag_res.items[6].value,
-                    "%.2fmg/kg", td->result);
-                diag_result_creat();
-                break;
-            default:
-                break;
-            }
-
-            test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
-            run_flag = RUN_IDLE;
-            GUI_EndDialog(wait_diag_handle, 0);
-            break;
-        }
-
         run_cnt--;
         hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
         PROGBAR_SetValue(hItem, test_progress(run_cnt));
         WM_Exec();
 
+        if (run_cnt > 0) {
+            WM_RestartTimer(pMsg->Data.v, 1000);
+            break;
+        }
+
+        //volt = test_volt_get();
+        GUI_EndDialog(wait_diag_handle, 0);
+        beep_finished();
+        switch (run_flag) {
+        case RUN_BLOCK1:
+            volt = -40.0;
+            td->concent_block1 = data_calc_concentration(volt);
+            tctrl.block1_finished++;
+            sprintf(strbuf, TEST_CONCENT_FMT, td->concent_block1);
+            hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_BLOCKTEST1);
+            EDIT_SetText(hItem, strbuf);
+            update_block_concent(pMsg->hWin, td);
+            graph_point_add(pMsg->hWin, volt, td->concent_block1);
+            g_diag_ok.header = "空白实验1";
+            g_diag_ok.str_lin1 = "完成空白实验1,溶液浓度为:";
+            g_diag_ok.str_lin2 = strbuf;
+            g_diag_ok.str_lin3 = NULL;
+            diag_ok_creat();
+            break;
+        case RUN_BLOCK2:
+            volt = -50.0;
+            td->concent_block2 = data_calc_concentration(volt);
+            tctrl.block2_finished++;
+            sprintf(strbuf, TEST_CONCENT_FMT, td->concent_block2);
+            hItem = WM_GetDialogItem(pMsg->hWin, ID_EDIT_BLOCKTEST2);
+            EDIT_SetText(hItem, strbuf);
+            update_block_concent(pMsg->hWin, td);
+            graph_point_add(pMsg->hWin, volt, td->concent_block2);
+            g_diag_ok.header = "空白实验2";
+            g_diag_ok.str_lin1 = "完成空白实验2,溶液浓度为:";
+            g_diag_ok.str_lin2 = strbuf;
+            g_diag_ok.str_lin3 = NULL;
+            diag_ok_creat();
+            break;
+        case RUN_TEST:
+            volt = -320.0;
+            td->concent_sample = data_calc_concentration(volt);
+            sprintf(strbuf, TEST_CONCENT_FMT, td->concent_sample);
+            hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_TEST_CONCENT_VALUE);
+            TEXT_SetText(hItem, strbuf);
+            data_calc_result(td);
+            graph_point_add(pMsg->hWin, volt, td->concent_sample);
+            data_add_timestamp(td);
+            data_save(td);
+
+            g_diag_res.cnt = 7;
+            g_diag_res.header = "分析结果";
+            g_diag_res.items[0].item = "试样质量：";
+            sprintf(g_diag_res.items[0].value,
+                "%.3fg", td->weight_sample);
+            g_diag_res.items[1].item = "滤液体积：";
+            sprintf(g_diag_res.items[1].value,
+                "%.2fmL", td->volume_sample);
+            g_diag_res.items[2].item = "空白实验1溶液浓度：";
+            sprintf(g_diag_res.items[2].value,
+                TEST_CONCENT_FMT, td->concent_block1);
+            g_diag_res.items[3].item = "空白实验2溶液浓度：";
+            sprintf(g_diag_res.items[3].value,
+                TEST_CONCENT_FMT, td->concent_block2);
+            g_diag_res.items[4].item = "空白实验平均溶液浓度：";
+            sprintf(g_diag_res.items[4].value,
+                TEST_CONCENT_FMT, td->concent_blockave);
+            g_diag_res.items[5].item = "试样溶液浓度：";
+            sprintf(g_diag_res.items[5].value,
+                TEST_CONCENT_FMT, td->concent_sample);
+            g_diag_res.items[6].item = "氨离子含量：";
+            sprintf(g_diag_res.items[6].value,
+                "%.2fmg/kg", td->result);
+            diag_result_creat();
+            break;
+        default:
+            break;
+        }
+
+        run_flag = RUN_IDLE;
+        test_enable_all_items(pMsg->hWin, ID_GRAPH_0, ID_TEXT_HEADER, 1);
         WM_RestartTimer(pMsg->Data.v, 1000);
         break;
     default:

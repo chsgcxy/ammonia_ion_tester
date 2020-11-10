@@ -25,6 +25,7 @@
 #include "data.h"
 #include "test.h"
 #include "rtc.h"
+#include "ad7792.h"
 
 struct ui_msg g_ui_msg;
 
@@ -125,6 +126,7 @@ int main(void)
 	uart4_init();
 	printf("System Init!\r\n");
 	printf("CoreClock = %dMHz\r\n", SystemCoreClock / 1000000);
+
 	rtc_init();
 	lcd_io_init();
 	GUI_Init();
@@ -140,7 +142,7 @@ int main(void)
 	GUI_DispStringHCenterAt("北京同创中仪科技为您服务", 400, 350);
 	delay_ms(1500);
 	
-	spi1_init();
+	//spi1_init();
 	spi2_init();
 	spi3_init();
 	beep_init();
@@ -155,7 +157,9 @@ int main(void)
 	touch_init();
 	touch_calibrate(0);
 
-	ad770x_init();
+	AD7792_Init();
+	ad7792_get_volt();
+
 
 	g_printer.name = "simple printer";
     g_printer.send = g_printer_send;

@@ -913,11 +913,6 @@
               <FileType>1</FileType>
               <FilePath>..\driver\ad7792.c</FilePath>
             </File>
-            <File>
-              <FileName>ad7792_tmp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\driver\ad7792_tmp.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>

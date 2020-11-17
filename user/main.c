@@ -158,7 +158,8 @@ int main(void)
 	touch_calibrate(0);
 
 	AD7792_Init();
-	ad7792_get_volt();
+	just_test();
+	//ad7792_get_volt();
 
 
 	g_printer.name = "simple printer";

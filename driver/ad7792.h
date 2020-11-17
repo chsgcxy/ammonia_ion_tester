@@ -144,6 +144,9 @@
 #define AD7792_EN_IXCEN_210uA				2  /* Excitation Current 210uA */
 #define AD7792_EN_IXCEN_1mA					3  /* Excitation Current 1mA */
 
+
+#define AD7792_UPDATE_RATE(x)	(((x) & 0xf) << 0)
+
 /******************************************************************************/
 /* Functions Prototypes                                                       */
 /******************************************************************************/
@@ -190,6 +193,8 @@ unsigned long AD7792_SingleConversion(void);
 unsigned long AD7792_ContinuousReadAvg(unsigned char sampleNumber);
 
 extern void ad7792_get_volt(void);
+
+extern void just_test(void);
 
 #endif	// _AD7792_H_
 

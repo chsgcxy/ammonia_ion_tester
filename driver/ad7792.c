@@ -63,6 +63,7 @@
 #define MISO                    AD7792_RDY_STATE
 #define AD7792_ClrRst()	
 #define AD7792_SetRst()
+#define AD7792_SPI_DELAY   delay_us(50)
 
 unsigned char spi_gpio_readwrite_byte(unsigned char bytedata)
 {
@@ -75,12 +76,12 @@ unsigned char spi_gpio_readwrite_byte(unsigned char bytedata)
         else
             MOSI0;
         SCLOCK0;
-        delay_us(1);
+        AD7792_SPI_DELAY;
         temp = temp << 1;
         if (MISO)
             temp |= 0x01;
         SCLOCK1;
-        delay_us(1);
+        AD7792_SPI_DELAY;
         bytedata = bytedata << 1;
     }
 
@@ -248,9 +249,13 @@ void AD7792_SetRegisterValue(unsigned char regAddress,
 *******************************************************************************/
 void AD7792_WaitRdyGoLow(void)
 {
-    while( AD7792_RDY_STATE )
-    {
-        ;
+    unsigned long status;
+
+    while(1) {
+        status = AD7792_GetRegisterValue(AD7792_REG_STAT, 1, 1);
+        if ((status & 0x80) == 0x0)
+            return;
+        printf("status = %x\r\n", status);
     }
 }
 
@@ -270,6 +275,22 @@ void AD7792_SetMode(unsigned long mode)
                                       1); // CS is modified by SPI read/write functions.
     command &= ~AD7792_MODE_SEL(0xFF);
     command |= AD7792_MODE_SEL(mode);
+    AD7792_SetRegisterValue(
+            AD7792_REG_MODE,
+            command,
+            2, 
+            1); // CS is modified by SPI read/write functions.
+}
+
+void AD7792_SetUpdateRate(unsigned long rate)
+{
+    unsigned long command;
+    
+    command = AD7792_GetRegisterValue(AD7792_REG_MODE,
+                                      2,
+                                      1); // CS is modified by SPI read/write functions.
+    command &= ~AD7792_UPDATE_RATE(0xF);
+    command |= AD7792_UPDATE_RATE(rate);
     AD7792_SetRegisterValue(
             AD7792_REG_MODE,
             command,
@@ -380,14 +401,14 @@ unsigned long AD7792_SingleConversion(void)
     unsigned long regData = 0x0;
     
     command  = AD7792_MODE_SEL(AD7792_MODE_SINGLE);
-    ADI_PART_CS_LOW;
+    //ADI_PART_CS_LOW;
     AD7792_SetRegisterValue(AD7792_REG_MODE, 
                             command,
                             2,
-                            0);// CS is not modified by SPI read/write functions.
+                            1);// CS is not modified by SPI read/write functions.
     AD7792_WaitRdyGoLow();
-    regData = AD7792_GetRegisterValue(AD7792_REG_DATA, 2, 0); // CS is not modified by SPI read/write functions.
-    ADI_PART_CS_HIGH;
+    regData = AD7792_GetRegisterValue(AD7792_REG_DATA, 2, 1); // CS is not modified by SPI read/write functions.
+    //ADI_PART_CS_HIGH;
 
     return(regData);
 }
@@ -425,13 +446,17 @@ void ad7792_get_volt(void)
     unsigned long samplesAverage = 0x0;
     unsigned short volt;
     float diff, result;
-
+    unsigned long regValue = 0xD;
+    AD7792_SetRegisterValue(AD7792_REG_IO, regValue, 1, 1);
     AD7792_SetGain(AD7792_GAIN_1);
-    AD7792_SetChannel(AD7792_CH_AIN1P_AIN1M);
+    AD7792_SetChannel(AD7792_CH_AIN2P_AIN2M);
+    // AD7792_SetIntReference(AD7792_REFSEL_INT);
+    // AD7792_Calibrate(AD7792_MODE_CAL_INT_ZERO, AD7792_CH_AIN1P_AIN1M);
+    // delay_us_ms(50);
+    // AD7792_Calibrate(AD7792_MODE_CAL_INT_FULL, AD7792_CH_AIN1P_AIN1M);
+    // delay_us_ms(50);
     AD7792_SetIntReference(AD7792_REFSEL_EXT);
-  
     while (1) {
-        AD7792_SetChannel(AD7792_CH_AIN1P_AIN1M);
         samplesAverage = AD7792_SingleConversion();
         volt = (unsigned short)(samplesAverage & 0xffff);
         if (volt >= 0x8000)
@@ -443,3 +468,144 @@ void ad7792_get_volt(void)
         delay_ms(1000);
     }
 }
+
+
+
+unsigned char DataRead[3];
+
+
+
+
+
+void WriteToReg(unsigned char ByteData) // write ByteData to the register
+{
+	unsigned char temp;
+	int i;	
+	ADI_PART_CS_LOW;
+	temp=0x80;
+	for(i=0;i<8;i++)
+	{
+ 		if((temp & ByteData)==0)
+		{		
+      		MOSI0;
+		}	
+ 		else
+		{
+			 MOSI1;
+     	}
+		SCLOCK0;
+		delay_us(10);
+	   	SCLOCK1;
+		delay_us(10);
+ 		temp=temp>>1;
+	}
+	ADI_PART_CS_HIGH;
+}
+
+
+void ReadFromReg(unsigned char nByte) // nByte is the number of bytes which need to be read
+{
+	int i,j;
+   	unsigned char temp;
+   	MOSI1;
+ 	ADI_PART_CS_LOW;
+    temp=0;
+
+	for(i=0; i<nByte; i++)
+	{
+		for(j=0; j<8; j++)
+	    {
+	     	SCLOCK0;
+	     	if(MISO==0)
+	     	{
+				temp=temp<<1;
+		 	}else
+		 	{
+				temp=temp<<1;
+		 		temp=temp+0x01;
+			}
+			delay_us(10);
+	        SCLOCK1;
+			delay_us(10);
+		  }
+		  DataRead[i]=temp;
+		  temp=0;
+	}
+    ADI_PART_CS_HIGH;
+}
+
+void just_test()
+{
+
+	int ResetTime;
+    uint16_t volt = 0;
+	
+	printf("Hello\r\n");
+
+	/* PRECONFIGURE...*/
+	ResetTime=32;
+	SCLOCK1;
+
+ 	ADI_PART_CS_LOW;		  //to keep MOSI1 for 32 sclock to reset the part
+ 	MOSI1;
+ 	while(ResetTime--)
+	{
+		delay_us(10);
+		SCLOCK0;
+		delay_us(10);
+ 		SCLOCK1;
+	}
+ 	ADI_PART_CS_HIGH;	
+	
+    printf("Reset\r\n");
+
+    WriteToReg(0x60);
+    ReadFromReg(1);
+
+    printf("ID = %x\r\n", DataRead[0]);
+	
+	
+	WriteToReg(0x10); //write to Communication register.The next step is writing to Configuration register.
+	WriteToReg(0x00); //set the Configuration bipolar mode.Gain=1.
+	WriteToReg(0x01); //Configuration internal reference selected.
+
+    WriteToReg(0x28);
+    WriteToReg(0x2);
+
+	while(1)
+	{
+	
+		WriteToReg(0x08);//write to Communication register.The next step is writing to Mode register.
+		WriteToReg(0x20);//set the mode register as single conversion mode.
+		WriteToReg(0x0A);//inter 64 kHZ clock.internal clock is not available at the clk pin.
+		
+	   
+		
+		
+		// WriteToReg(0x40);//write to Communication register.The next step is to read from Status register.
+		// ReadFromReg(1);	
+		// while((DataRead[0]&0x80)==0x80)//wait for the end of convertion by polling the status register RDY bit
+	 
+		// {
+		  
+		// 	WriteToReg(0x40); 
+		// 	ReadFromReg(1);	
+		// }
+
+        while (MISO);
+
+        //printf("READ status = %x\r\n", DataRead[0]);
+		 
+		 
+		
+		WriteToReg(0x58);//write to Communication register.The next step is to read from Data register.
+		ReadFromReg(2);
+
+        volt = DataRead[0];
+        volt <<= 8;
+        volt |= DataRead[1];
+        printf("VOLT = %x\r\n", volt);
+        delay_ms(2000);
+	}
+
+}    

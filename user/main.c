@@ -26,6 +26,7 @@
 #include "test.h"
 #include "rtc.h"
 #include "ad7792.h"
+#include "ltc2400.h"
 
 struct ui_msg g_ui_msg;
 
@@ -157,9 +158,19 @@ int main(void)
 	touch_init();
 	touch_calibrate(0);
 
-	AD7792_Init();
-	just_test();
+	//AD7792_Init();
+	//just_test();
 	//ad7792_get_volt();
+	ltc2400_init();
+	{
+		uint32_t ltc_data;
+		while (1) {
+			ltc_data = ltc2400_read_data();
+			printf("ltc2400 data = 0x%x\r\n", ltc_data);
+			delay_ms(1000);
+		}	
+	}
+	
 
 
 	g_printer.name = "simple printer";

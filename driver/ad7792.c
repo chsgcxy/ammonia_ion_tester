@@ -539,6 +539,7 @@ void just_test()
 
 	int ResetTime;
     uint16_t volt = 0;
+    float diff, result, ref;
 	
 	printf("Hello\r\n");
 
@@ -564,48 +565,107 @@ void just_test()
 
     printf("ID = %x\r\n", DataRead[0]);
 	
-	
+    // internal ref, channel=3, gain=1
 	WriteToReg(0x10); //write to Communication register.The next step is writing to Configuration register.
 	WriteToReg(0x00); //set the Configuration bipolar mode.Gain=1.
-	WriteToReg(0x01); //Configuration internal reference selected.
+	WriteToReg(0x80); //Configuration internal reference selected.
 
     WriteToReg(0x28);
     WriteToReg(0x2);
 
-	while(1)
-	{
-	
+    // waiting for convert flat.
+    ResetTime = 300;
+    while(ResetTime--) {
 		WriteToReg(0x08);//write to Communication register.The next step is writing to Mode register.
 		WriteToReg(0x20);//set the mode register as single conversion mode.
 		WriteToReg(0x0A);//inter 64 kHZ clock.internal clock is not available at the clk pin.
+
+        while (MISO);
+
+		WriteToReg(0x58);//write to Communication register.The next step is to read from Data register.
+		ReadFromReg(2);
+        volt = DataRead[0];
+        volt <<= 8;
+        volt |= DataRead[1];
+        if (volt >= 0x8000)
+            diff = (float)(volt - 0x8000);
+        else
+            diff = -(float)(0x8000 - volt);
+        result = (diff / 0x8000) * 1170;
+        printf("%s: read value 0x%x, volt = %f\r\n", __FUNCTION__, volt, result);
+        delay_ms(1000);
+    }
+   
+    ref = (diff / 0x8000) * 1170.0;
+    printf("get ref = %f\r\n", ref);
+
+    printf("read channel 1\r\n");
+    WriteToReg(0x10); //write to Communication register.The next step is writing to Configuration register.
+	WriteToReg(0x00); //set the Configuration bipolar mode.Gain=1.
+	WriteToReg(0x00); //Configuration internal reference selected.
+
+    while (1) {
+        WriteToReg(0x08);//write to Communication register.The next step is writing to Mode register.
+		WriteToReg(0x20);//set the mode register as single conversion mode.
+		WriteToReg(0x0A);//inter 64 kHZ clock.internal clock is not available at the clk pin.
+
+        while (MISO);
+
+		WriteToReg(0x58);//write to Communication register.The next step is to read from Data register.
+		ReadFromReg(2);
+        volt = DataRead[0];
+        volt <<= 8;
+        volt |= DataRead[1];
+        if (volt >= 0x8000)
+            diff = (float)(volt - 0x8000);
+        else
+            diff = -(float)(0x8000 - volt);
+        result = (diff / 0x8000) * ref;
+        printf("%s: read value 0x%x, volt = %f\r\n", __FUNCTION__, volt, result);
+        delay_ms(2000);
+	}
+
+
+	// while(1)
+	// {
+	
+	// 	WriteToReg(0x08);//write to Communication register.The next step is writing to Mode register.
+	// 	WriteToReg(0x20);//set the mode register as single conversion mode.
+	// 	WriteToReg(0x0A);//inter 64 kHZ clock.internal clock is not available at the clk pin.
 		
 	   
 		
 		
-		// WriteToReg(0x40);//write to Communication register.The next step is to read from Status register.
-		// ReadFromReg(1);	
-		// while((DataRead[0]&0x80)==0x80)//wait for the end of convertion by polling the status register RDY bit
+	// 	// WriteToReg(0x40);//write to Communication register.The next step is to read from Status register.
+	// 	// ReadFromReg(1);	
+	// 	// while((DataRead[0]&0x80)==0x80)//wait for the end of convertion by polling the status register RDY bit
 	 
-		// {
+	// 	// {
 		  
-		// 	WriteToReg(0x40); 
-		// 	ReadFromReg(1);	
-		// }
+	// 	// 	WriteToReg(0x40); 
+	// 	// 	ReadFromReg(1);	
+	// 	// }
 
-        while (MISO);
+    //     while (MISO);
 
-        //printf("READ status = %x\r\n", DataRead[0]);
+    //     //printf("READ status = %x\r\n", DataRead[0]);
 		 
 		 
 		
-		WriteToReg(0x58);//write to Communication register.The next step is to read from Data register.
-		ReadFromReg(2);
+	// 	WriteToReg(0x58);//write to Communication register.The next step is to read from Data register.
+	// 	ReadFromReg(2);
 
-        volt = DataRead[0];
-        volt <<= 8;
-        volt |= DataRead[1];
-        printf("VOLT = %x\r\n", volt);
-        delay_ms(2000);
-	}
+    //     volt = DataRead[0];
+    //     volt <<= 8;
+    //     volt |= DataRead[1];
+    //     printf("VOLT = %x\r\n", volt);
+    //     if (volt >= 0x8000)
+    //         diff = (float)(volt - 0x8000);
+    //     else
+    //         diff = -(float)(0x8000 - volt);
+    //     result = (diff / 0x8000) * 1170;
+    //     printf("%s: read value 0x%x, volt = %f\r\n", __FUNCTION__, volt, result);
+    //     delay_ms(2000);
+	// }
 
 }    

@@ -162,16 +162,7 @@ int main(void)
 	//just_test();
 	//ad7792_get_volt();
 	ltc2400_init();
-	{
-		uint32_t ltc_data;
-		while (1) {
-			ltc_data = ltc2400_read_data();
-			printf("ltc2400 data = 0x%x\r\n", ltc_data);
-			delay_ms(1000);
-		}	
-	}
-	
-
+	data_calc_coeff(NULL);
 
 	g_printer.name = "simple printer";
     g_printer.send = g_printer_send;

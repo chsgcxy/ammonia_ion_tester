@@ -1,5 +1,6 @@
 #include "ltc2400.h"
 #include "delay.h"
+#include "stdio.h"
 
 #define		BIT0                (0x01)
 #define		BIT1                (0x02)
@@ -20,7 +21,7 @@
 #define MOSI1                   GPIO_SetBits(GPIOA, GPIO_Pin_7)
 #define MOSI0                   GPIO_ResetBits(GPIOA, GPIO_Pin_7)
 #define MISO                    LTC2400_RDY_STATE
-#define LTC2400_DELAY           delay_us(10)
+#define LTC2400_DELAY           delay_us(1)
 
 //LTC2400--相关变量的声明
 uint32_t LTC2400_24BitADC = 0;
@@ -58,10 +59,11 @@ void ltc2400_init(void)
 ** 相关文件: 
 ** 修改日志: 	2014.10.05 2020.03.22
 *************************************************************************/
-uint32_t ltc2400_read_data(void)
+float ltc2400_read_data(void)
 {
 	unsigned	char	LTC2400_RxDataCn = 0;
 	unsigned	char	LTC2400_RxDataChar = 0;
+	float volt = 0.0;
 
 	uint32_t LTC2400_OutData = 0;
 	
@@ -104,13 +106,20 @@ uint32_t ltc2400_read_data(void)
 	
 	CS1;
 
-	if ((LTC2400_RxDataChar & BIT0) == BIT0)
+	if ((LTC2400_RxDataChar & 0x3) == 0x3) {
 		LTC2400_OutData = 0x00ffffff;
-
-	if ((LTC2400_RxDataChar & BIT1) == BIT1)
-		LTC2400_OutData = LTC2400_OutData;
-	else
+		printf("vin > Vref\r\n");
+	} else if ((LTC2400_RxDataChar & 0x1) == 0x1)
+		printf("vin < 0\r\n");
+	else if ((LTC2400_RxDataChar & 0x2) == 0x2) {
+		printf("0 < vin < Vref\r\n");
+	} else
 		LTC2400_OutData = 0;
 
-	return LTC2400_OutData >> 4;
+	LTC2400_OutData >>= 4;
+	volt = (float)LTC2400_OutData / (float)0x100000;
+	volt *= 2500.0;
+	volt -= 1250.0;
+	volt *= 2.0;
+	return volt;
 }

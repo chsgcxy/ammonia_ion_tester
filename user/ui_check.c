@@ -29,6 +29,7 @@
 #include "test.h"
 #include "ad770x.h"
 #include "ui_diag.h"
+#include "ltc2400.h"
 /*********************************************************************
 *
 *       Defines
@@ -120,7 +121,7 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 // USER START (Optionally insert additional static code)
 static int check_volt_diff(float diff)
 {
-    if (diff >= -60.0 && diff <= -54.0)
+    if (diff >= -60.0 && diff <= -40.0)
         return 0;
     else
         return 1;
@@ -372,10 +373,11 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             
             hItem = WM_GetDialogItem(pMsg->hWin, ID_PROGBAR_0);
             PROGBAR_SetValue(hItem, test_progress(run_cnt));
-
+            volt = ltc2400_read_data(); // take some time
+            printf("%s: read volt = %f\r\n", __FUNCTION__, volt);
             if (run_cnt <= 0) {
-                //volt = test_volt_get(); // take some time
-                volt = -80.0;
+                //volt = ltc2400_read_data(); // take some time
+                //printf("%s: read volt = %f\r\n", __FUNCTION__, volt);
                 sprintf(strbuf, TEST_VOLT_FMT, volt);
                 hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VOLT_VALUE);
                 TEXT_SetText(hItem, strbuf);
@@ -386,17 +388,17 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
                 hItem = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
                 switch (run_flag) {
                 case RUN_01MG:
-                    g_check_data.volt_01 = -120.0;
+                    g_check_data.volt_01 = volt;
                     g_check_data.done_01++;
                     LISTVIEW_SetItemText(hItem, 1, 4, strbuf);
                     break;
                 case RUN_001MG:
-                    g_check_data.volt_001 = -65.0;
+                    g_check_data.volt_001 = volt;
                     g_check_data.done_001++;
                     LISTVIEW_SetItemText(hItem, 1, 2, strbuf);
                     break;
                 case RUN_0001MG:
-                    g_check_data.volt_0001 = -10.0;
+                    g_check_data.volt_0001 = volt;
                     g_check_data.done_0001++;
                     LISTVIEW_SetItemText(hItem, 1, 0, strbuf);
                     break;

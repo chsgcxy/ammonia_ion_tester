@@ -31,6 +31,7 @@
 #include "test.h"
 #include "data.h"
 #include "ad770x.h"
+#include "ltc2400.h"
 /*********************************************************************
 *
 *       Defines
@@ -641,6 +642,9 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         PROGBAR_SetValue(hItem, test_progress(run_cnt));
         WM_Exec();
 
+        volt = ltc2400_read_data(); // take some time
+        printf("%s: read volt = %f\r\n", __FUNCTION__, volt);
+        
         if (run_cnt > 0) {
             WM_RestartTimer(pMsg->Data.v, 1000);
             break;
@@ -651,7 +655,8 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         beep_finished();
         switch (run_flag) {
         case RUN_BLOCK1:
-            volt = -40.0;
+            //volt = ltc2400_read_data();
+            //printf("%s: read volt = %f\r\n", __FUNCTION__, volt);
             td->concent_block1 = data_calc_concentration(volt);
             tctrl.block1_finished++;
             sprintf(strbuf, TEST_CONCENT_FMT, td->concent_block1);
@@ -666,7 +671,8 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             diag_ok_creat();
             break;
         case RUN_BLOCK2:
-            volt = -50.0;
+            //volt = ltc2400_read_data();
+            //printf("%s: read volt = %f\r\n", __FUNCTION__, volt);
             td->concent_block2 = data_calc_concentration(volt);
             tctrl.block2_finished++;
             sprintf(strbuf, TEST_CONCENT_FMT, td->concent_block2);
@@ -681,7 +687,8 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             diag_ok_creat();
             break;
         case RUN_TEST:
-            volt = -320.0;
+            //volt = ltc2400_read_data();
+            //printf("%s: read volt = %f\r\n", __FUNCTION__, volt);
             td->concent_sample = data_calc_concentration(volt);
             sprintf(strbuf, TEST_CONCENT_FMT, td->concent_sample);
             hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_TEST_CONCENT_VALUE);

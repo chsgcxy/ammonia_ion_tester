@@ -429,28 +429,70 @@ struct data_coeff {
 
 static struct data_coeff dcoeff;
 
+struct drecord {
+    float volt;
+    float concent;
+};
+
 void data_calc_coeff(struct test_data *td)
 {
-    float x_avg, y_avg;
-    float sum_xy;
-    float nxy_avg;
-    float sum_x2;
-    float nx_avg2;
+    float sum_volt = 0.0;
+    float sum_concent = 0.0;
+    float volt_avg = 0.0;
+    float concent_avg = 0.0;
+    float up = 0.0;
+    float down = 0.0;
     float a, b;
+    int i = 0;
 
-    x_avg = (td->volt_01 + td->volt_001 + td->volt_0001) / 3;
-    y_avg = (10000.0 + 1000.0 + 100.0) / 3;
-    sum_xy = td->volt_01 * 10000.0 + td->volt_001 * 1000.0 +
-        td->volt_0001 * 100.0;
-    nxy_avg = (10000.0 + 1000.0 + 100.0) *
-        (td->volt_01 + td->volt_001 + td->volt_0001) / 3;
-    sum_x2 = td->volt_01 * td->volt_01 +
-        td->volt_001 * td->volt_001 +
-        td->volt_0001 * td->volt_0001;
-    nx_avg2 = x_avg * x_avg * 3;
+    struct drecord data_record[3];
 
-    a = (sum_xy - nxy_avg) / (sum_x2 - nx_avg2);
-    b = y_avg - a * x_avg;
+    data_record[0].concent = 1.0;
+    data_record[0].volt = 10.0;
+    //data_record[0].volt = td->volt_0001;
+    data_record[1].concent = 10.0;
+    data_record[1].volt = -35.0;
+    //data_record[1].volt = td->volt_001;
+    data_record[2].concent = 100.0;
+    //data_record[2].volt = -90.0;
+    data_record[2].volt = td->volt_01;
+
+    // for (i = 0; i < 3; i++) {
+    //     volt_avg += data_record[i].volt;
+    //     concent_avg += data_record[i].concent;
+    //     sum_vc += data_record[i].volt * data_record[i].concent;
+    //     sum_volt2 += data_record[i].volt * data_record[i].volt;
+    // }
+        
+    // volt_avg /= 3;
+    // concent_avg /= 3;
+    // nxy_avg = volt_avg * concent_avg * 3;
+    // nvolt_avg2 = volt_avg * volt_avg * 3;
+
+    // a = (sum_vc - nxy_avg) / (sum_volt2 - nvolt_avg2);
+    // b = concent_avg - a * volt_avg;
+
+    // for (i = 0; i < 3; i++) {
+    //     sum_volt += data_record[i].volt;      
+    //     sum_concent += data_record[i].concent;
+    // }
+    // volt_avg = volt_avg / 3;
+    // concent_avg = concent_avg / 3; 
+    // for (i = 0; i < 3; i++) {     
+    //     up += (data_record[i].concent - concent_avg) * (data_record[i].volt - volt_avg);    
+    //     down += (data_record[i].volt - volt_avg) * (data_record[i].volt - volt_avg);    
+    // }    
+
+    // if(down == 0) 
+    //     a = 0.0;  
+    // else
+    //     a = (up / down);       
+
+    // b = (sum_concent - a * sum_volt) / 3;
+    printf("data 0 volt = %f, concent = %f\r\n", data_record[0].volt, data_record[0].concent);
+    printf("data 1 volt = %f, concent = %f\r\n", data_record[1].volt, data_record[1].concent);
+    a = (data_record[1].concent - data_record[0].concent) / (data_record[1].volt - data_record[0].volt);
+    b = data_record[1].concent - a * data_record[1].volt;
 
     dcoeff.a = a;
     dcoeff.b = b;
@@ -464,7 +506,7 @@ float data_calc_concentration(float volt)
     float concent = dcoeff.a * volt + dcoeff.b;
     DATA_DEBUG("%s: volt %fmV  convert to %fug/L\r\n",
         __FUNCTION__, volt, concent);
-    return concent / 1000;
+    return concent;
 }
 
 void data_calc_result(struct test_data *td)

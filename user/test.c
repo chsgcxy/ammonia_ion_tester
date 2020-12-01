@@ -3,6 +3,7 @@
 #include "stdio.h"
 #include "ad770x.h"
 #include "ads1256.h"
+#include "ltc2400.h"
 
 #define VOLT_DISCARD         (5)
 #define VOLT_WINDOWS         (5)
@@ -21,7 +22,7 @@ float test_volt_get(void)
     static float volt_buff[VOLT_BUF_CNT];
 
     for (i = 0; i < VOLT_BUF_CNT; i++)
-        volt_buff[i] = ad7705_read();
+        volt_buff[i] = ltc2400_read_data();
 
     /* sort */
 	for (i = 0; i < VOLT_BUF_CNT; i++) {

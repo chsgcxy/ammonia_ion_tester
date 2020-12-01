@@ -4,6 +4,6 @@
 #include "stm32f2xx.h"
 
 extern void ltc2400_init(void);
-extern uint32_t ltc2400_read_data(void);
+extern float ltc2400_read_data(void);
 
 #endif
